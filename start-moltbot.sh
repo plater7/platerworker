@@ -219,9 +219,10 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
         config.channels.telegram.allowFrom = ['*'];
     }
     // Clean up invalid 'dm' sub-object from previous versions
-delete config.channels.telegram.dm;
+    delete config.channels.telegram.dm;
+    }
 }
-}
+
 // Discord configuration
 // Note: Discord uses nested dm.policy, not flat dmPolicy like Telegram
 // See: https://github.com/moltbot/moltbot/blob/v2026.1.24-1/src/config/zod-schema.providers-core.ts#L147-L155
