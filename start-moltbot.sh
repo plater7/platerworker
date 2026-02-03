@@ -293,9 +293,9 @@ if (isOpenAI) {
     	
 	// Add models to the allowlist so they appear in /models
     // OpenAI models
-	config.agents.defaults.models['openai/gpt-5.2'] = { alias: 'GPT-5.2' };
-    config.agents.defaults.models['openai/gpt-5'] = { alias: 'GPT-5' };
-    config.agents.defaults.models['openai/gpt-4.5-preview'] = { alias: 'GPT-4.5' };
+	config.agents.defaults.models['openai/gpt-5.2'] = { alias: 'gpt-5.2' };
+    config.agents.defaults.models['openai/gpt-5'] = { alias: 'gpt-5' };
+    config.agents.defaults.models['openai/gpt-4.5-preview'] = { alias: 'gpt-4.5' };
 	config.agents.defaults.models['openrouter/openai/gpt-4o-mini'] = { alias: 'mini' };
     config.agents.defaults.models['openrouter/openai/gpt-4o'] = { alias: 'gpt',  };
     // General purpose
@@ -384,4 +384,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 004
+# 005
