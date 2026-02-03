@@ -264,7 +264,7 @@ if (process.env.SLACK_BOT_TOKEN && process.env.SLACK_APP_TOKEN) {
 //   https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/openai
 const baseUrl = (process.env.AI_GATEWAY_BASE_URL || process.env.ANTHROPIC_BASE_URL || '').replace(/\/+$/, '');
 //const isOpenAI = baseUrl.endsWith('/openai');
-const isOpenAI = baseUrl.contains('openrouter.ai');
+const isOpenAI = baseUrl.startWith('https://openrouter.ai');
 
 if (isOpenAI) {
     // Create custom openai provider config with baseUrl override
@@ -384,4 +384,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 005
+# 007
