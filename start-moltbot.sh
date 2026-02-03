@@ -281,12 +281,9 @@ if (isOpenAI) {
         baseUrl: baseUrl,
         api: 'openai-responses',
         models: [
-			{ id: 'openrouter/openrouter/auto', alias: 'auto' },
-            { id: 'openrouter/openrouter/free', alias: 'freerouter' },
-			{ id: 'gpt-5.2', name: 'GPT-5.2', contextWindow: 200000 },
-            { id: 'gpt-4.5-preview', name: 'GPT-4.5 Preview', contextWindow: 128000 },
-			{ id: 'openrouter/deepseek/deepseek-chat-v3-0324', alias: 'deep' },
-			{ id: 'openrouter/z-ai/glm-4.5-air:free', alias: 'glm-4.5' },
+			{ id: 'openrouter/openrouter/auto' },
+            { id: 'openrouter/openrouter/free' },
+			{ id: 'openrouter/z-ai/glm-4.5-air:free' },
         ]
     };
 	console.log('Base models adquired');
@@ -384,4 +381,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 009
+# 011
