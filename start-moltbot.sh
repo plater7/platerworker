@@ -231,11 +231,9 @@ if (process.env.DISCORD_BOT_TOKEN) {
     config.channels.discord.token = process.env.DISCORD_BOT_TOKEN;
     config.channels.discord.enabled = true;
     const discordDmPolicy = process.env.DISCORD_DM_POLICY || 'pairing';
-    config.channels.discord.dm = config.channels.discord.dm || {};
-    config.channels.discord.dm.policy = discordDmPolicy;
-    // "open" policy requires allowFrom: ["*"]
-    if (discordDmPolicy === 'open') {
-        config.channels.discord.dm.allowFrom = ['*'];
+    config.channels.discord.dmPolicy = process.env.DISCORD_DM_POLICY || 'pairing';
+    // Clean up invalid 'dm' sub-object from previous versions
+    delete config.channels.discord.dm;
     }
 }
 
