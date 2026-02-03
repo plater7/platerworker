@@ -189,6 +189,7 @@ if (config.models?.providers?.openrouter) {
     }
 }
 
+
 // Gateway configuration
 config.gateway.port = 18789;
 config.gateway.mode = 'local';
@@ -213,7 +214,7 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
     config.channels.telegram.enabled = true;
     const telegramDmPolicy = process.env.TELEGRAM_DM_POLICY || 'pairing';
     config.channels.telegram.dmPolicy = telegramDmPolicy;
-    if (process.env.TELEGRAM_DM_ALLOW_FROM) {
+    // "open" policy requires allowFrom: ["*"]
     if (process.env.TELEGRAM_DM_ALLOW_FROM) {
         // Explicit allowlist: "123,456,789" → ['123', '456', '789']
         config.channels.telegram.allowFrom = process.env.TELEGRAM_DM_ALLOW_FROM.split(',');
