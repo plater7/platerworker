@@ -396,6 +396,16 @@ if (isOpenAI) {
         alias: 'qwq',
         description: 'Budget Reasoning/Math | Strong math | $0.15/$0.40'
     };
+    // GLM
+    config.agents.defaults.models['openrouter/z-ai/glm-4.5-air:free'] = {
+	alias: 'glm-4.5',
+	description: 'GLM-4.5-Air is the lightweight variant of our latest flagship model family, also purpose-built for agent-centric applications. Like GLM-4.5, it adopts the Mixture-of-Experts (MoE) architecture but with a more compact parameter size. GLM-4.5-Air also supports hybrid inference modes, offering a "thinking mode" for advanced reasoning and tool use, and a "non-thinking mode" for real-time interaction. Users can control the reasoning behaviour with the reasoning enabled boolean.'
+    };
+config.agents.defaults.models['openrouter/z-ai/glm-4.7'] = {
+        alias: 'glm-4.7',
+        description: 'GLM-4.7 is Z.AI’s latest flagship model, featuring upgrades in two key areas: enhanced programming capabilities and more stable multi-step reasoning/execution. It demonstrates significant improvements in executing complex agent tasks while delivering more natural conversational experiences and superior front-end aesthetics.'
+    };
+
     // OpenRouter Free router
     config.agents.defaults.models['openrouter/openrouter/free'] = {
 	alias: 'freerouter',
