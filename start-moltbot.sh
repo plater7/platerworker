@@ -218,9 +218,9 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
     if (telegramDmPolicy === 'open') {
         config.channels.telegram.allowFrom = ['*'];
     }
-}
-// Clean up invalid 'dm' sub-object from previous versions
+    // Clean up invalid 'dm' sub-object from previous versions
 delete config.channels.telegram.dm;
+}
 }
 // Discord configuration
 // Note: Discord uses nested dm.policy, not flat dmPolicy like Telegram
