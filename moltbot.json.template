@@ -6,8 +6,6 @@
         "primary": "openrouter/z-ai/glm-4.5-air:free"
       },
       "models": {
-	    "openrouter/openrouter/auto",
-        "openrouter/openrouter/free",
 		"gpt-5.2",
         "gpt-4.5-preview",
 		"openrouter/deepseek/deepseek-chat-v3-0324",
@@ -22,4 +20,4 @@
     "mode": "local"
   }
 }
-# 011
+# 014

@@ -290,37 +290,37 @@ if (isOpenAI) {
     	
 	// Add models to the allowlist so they appear in /models
     // OpenAI models
-	config.agents.defaults.models['openai/gpt-5.2'] = { alias: 'gpt-5.2' };
-    config.agents.defaults.models['openai/gpt-5'] = { alias: 'gpt-5' };
-    config.agents.defaults.models['openai/gpt-4.5-preview'] = { alias: 'gpt-4.5' };
-	config.agents.defaults.models['openrouter/openai/gpt-4o-mini'] = { alias: 'mini' };
-    config.agents.defaults.models['openrouter/openai/gpt-4o'] = { alias: 'gpt',  };
+	//config.agents.defaults.models['openai/gpt-5.2'] = { alias: 'gpt-5.2' };
+    //config.agents.defaults.models['openai/gpt-5'] = { alias: 'gpt-5' };
+    //config.agents.defaults.models['openai/gpt-4.5-preview'] = { alias: 'gpt-4.5' };
+	//config.agents.defaults.models['openrouter/openai/gpt-4o-mini'] = { alias: 'mini' };
+    //config.agents.defaults.models['openrouter/openai/gpt-4o'] = { alias: 'gpt',  };
     // General purpose
-    config.agents.defaults.models['openrouter/deepseek/deepseek-chat-v3-0324'] = { alias: 'deep' };
+    //config.agents.defaults.models['openrouter/deepseek/deepseek-chat-v3-0324'] = { alias: 'deep' };
     // Coding specialists
-    config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct'] = { alias: 'qwen' };
-    config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct:free'] = { alias: 'qwenfree' };
-    config.agents.defaults.models['openrouter/mistralai/devstral-small:free'] = { alias: 'devstral' };
-    config.agents.defaults.models['openrouter/xiaomi/mimo-vl-7b:free'] = { alias: 'mimo' };
-    config.agents.defaults.models['openrouter/x-ai/grok-code-fast-1'] = { alias: 'grokcode' };
+    //config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct'] = { alias: 'qwen' };
+    //config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct:free'] = { alias: 'qwenfree' };
+    //config.agents.defaults.models['openrouter/mistralai/devstral-small:free'] = { alias: 'devstral' };
+    //config.agents.defaults.models['openrouter/xiaomi/mimo-vl-7b:free'] = { alias: 'mimo' };
+    //config.agents.defaults.models['openrouter/x-ai/grok-code-fast-1'] = { alias: 'grokcode' };
     // Agentic / Tools
-    config.agents.defaults.models['openrouter/x-ai/grok-4.1-fast'] = { alias: 'grok' };
-    config.agents.defaults.models['openrouter/moonshotai/kimi-k2.5'] = { alias: 'kimi' };
+    //config.agents.defaults.models['openrouter/x-ai/grok-4.1-fast'] = { alias: 'grok' };
+    //config.agents.defaults.models['openrouter/moonshotai/kimi-k2.5'] = { alias: 'kimi' };
     // Speed / Fast
-    config.agents.defaults.models['openrouter/google/gemini-2.0-flash-001'] = { alias: 'flash' };
+    //config.agents.defaults.models['openrouter/google/gemini-2.0-flash-001'] = { alias: 'flash' };
     // Claude models
-    config.agents.defaults.models['openrouter/anthropic/claude-3.5-haiku'] = { alias: 'haiku' };
-    config.agents.defaults.models['openrouter/anthropic/claude-sonnet-4'] = { alias: 'sonnet' };
+    //config.agents.defaults.models['openrouter/anthropic/claude-3.5-haiku'] = { alias: 'haiku' };
+    //config.agents.defaults.models['openrouter/anthropic/claude-sonnet-4'] = { alias: 'sonnet' };
     // Reasoning models
-    config.agents.defaults.models['openrouter/deepseek/deepseek-reasoner'] = { alias: 'think' };
-    config.agents.defaults.models['openrouter/qwen/qwq-32b-preview'] = { alias: 'qwq' };
+    //config.agents.defaults.models['openrouter/deepseek/deepseek-reasoner'] = { alias: 'think' };
+    //config.agents.defaults.models['openrouter/qwen/qwq-32b-preview'] = { alias: 'qwq' };
     // GLM
-    config.agents.defaults.models['openrouter/z-ai/glm-4.5-air:free'] = { alias: 'glm-4.5' };
+    //config.agents.defaults.models['openrouter/z-ai/glm-4.5-air:free'] = { alias: 'glm-4.5' };
     config.agents.defaults.models['openrouter/z-ai/glm-4.7'] = { alias: 'glm-4.7' };
     // Auto-routing
-    config.agents.defaults.models['openrouter/openrouter/auto'] = { alias: 'auto' };
+    //config.agents.defaults.models['openrouter/openrouter/auto'] = { alias: 'auto' };
     // OpenRouter Free router
-    config.agents.defaults.models['openrouter/openrouter/free'] = { alias: 'freerouter' };
+    //config.agents.defaults.models['openrouter/openrouter/free'] = { alias: 'freerouter' };
 
 	config.agents.defaults.model.primary = 'openrouter/z-ai/glm-4.5-air:free';	
 	console.log('Set GLM-4.5 Free as primary');
@@ -381,4 +381,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 013
+# 014
