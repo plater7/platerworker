@@ -94,7 +94,21 @@ else
     echo "R2 not mounted, starting fresh"
 fi
 
-# Restore skills from R2 backup if available (only if R2 is newer)
+# Restore full workspace from R2 backup if available (only if R2 is newer)
+# This includes memory, tools, custom files - everything the agent creates
+WORKSPACE_DIR="/root/clawd"
+if [ -d "$BACKUP_DIR/clawd" ] && [ "$(ls -A $BACKUP_DIR/clawd 2>/dev/null)" ]; then
+    if should_restore_from_r2; then
+        echo "Restoring workspace from $BACKUP_DIR/clawd..."
+        mkdir -p "$WORKSPACE_DIR"
+        cp -a "$BACKUP_DIR/clawd/." "$WORKSPACE_DIR/"
+        echo "Restored workspace from R2 backup"
+    fi
+fi
+
+# Restore skills from R2 backup if available (legacy path, only if R2 is newer)
+# Note: Skills are also included in the workspace backup above, but we keep this
+# for backwards compatibility with existing backups that only have /skills/
 SKILLS_DIR="/root/clawd/skills"
 if [ -d "$BACKUP_DIR/skills" ] && [ "$(ls -A $BACKUP_DIR/skills 2>/dev/null)" ]; then
     if should_restore_from_r2; then
@@ -200,12 +214,12 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
     config.channels.telegram.enabled = true;
     const telegramDmPolicy = process.env.TELEGRAM_DM_POLICY || 'pairing';
     config.channels.telegram.dmPolicy = telegramDmPolicy;
-    if (process.env.TELEGRAM_DM_ALLOW_FROM) {
-        // Explicit allowlist: "123,456,789" → ['123', '456', '789']
-        config.channels.telegram.allowFrom = process.env.TELEGRAM_DM_ALLOW_FROM.split(',');
-    } else if (telegramDmPolicy === 'open') {
-        // "open" policy requires allowFrom: ["*"]
+    // "open" policy requires allowFrom: ["*"]
+    if (telegramDmPolicy === 'open') {
         config.channels.telegram.allowFrom = ['*'];
+    }
+    // Clean up invalid 'dm' sub-object from previous versions
+    delete config.channels.telegram.dm;
     }
 }
 
@@ -216,12 +230,9 @@ if (process.env.DISCORD_BOT_TOKEN) {
     config.channels.discord = config.channels.discord || {};
     config.channels.discord.token = process.env.DISCORD_BOT_TOKEN;
     config.channels.discord.enabled = true;
-    const discordDmPolicy = process.env.DISCORD_DM_POLICY || 'pairing';
-    config.channels.discord.dm = config.channels.discord.dm || {};
-    config.channels.discord.dm.policy = discordDmPolicy;
-    // "open" policy requires allowFrom: ["*"]
-    if (discordDmPolicy === 'open') {
-        config.channels.discord.dm.allowFrom = ['*'];
+    config.channels.discord.dmPolicy = process.env.DISCORD_DM_POLICY || 'pairing';
+    // Clean up invalid 'dm' sub-object from previous versions
+    delete config.channels.discord.dm;
     }
 }
 
