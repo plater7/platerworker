@@ -94,21 +94,7 @@ else
     echo "R2 not mounted, starting fresh"
 fi
 
-# Restore full workspace from R2 backup if available (only if R2 is newer)
-# This includes memory, tools, custom files - everything the agent creates
-WORKSPACE_DIR="/root/clawd"
-if [ -d "$BACKUP_DIR/clawd" ] && [ "$(ls -A $BACKUP_DIR/clawd 2>/dev/null)" ]; then
-    if should_restore_from_r2; then
-        echo "Restoring workspace from $BACKUP_DIR/clawd..."
-        mkdir -p "$WORKSPACE_DIR"
-        cp -a "$BACKUP_DIR/clawd/." "$WORKSPACE_DIR/"
-        echo "Restored workspace from R2 backup"
-    fi
-fi
-
-# Restore skills from R2 backup if available (legacy path, only if R2 is newer)
-# Note: Skills are also included in the workspace backup above, but we keep this
-# for backwards compatibility with existing backups that only have /skills/
+# Restore skills from R2 backup if available (only if R2 is newer)
 SKILLS_DIR="/root/clawd/skills"
 if [ -d "$BACKUP_DIR/skills" ] && [ "$(ls -A $BACKUP_DIR/skills 2>/dev/null)" ]; then
     if should_restore_from_r2; then
@@ -177,17 +163,6 @@ if (config.models?.providers?.anthropic?.models) {
     }
 }
 
-// Clean up invalid openrouter provider config (OpenRouter uses built-in support, no providers config needed)
-if (config.models?.providers?.openrouter) {
-    console.log('Removing invalid models.providers.openrouter block');
-    delete config.models.providers.openrouter;
-    if (config.models.providers && Object.keys(config.models.providers).length === 0) {
-        delete config.models.providers;
-    }
-    if (config.models && Object.keys(config.models).length === 0) {
-        delete config.models;
-    }
-}
 
 
 // Gateway configuration
@@ -214,12 +189,12 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
     config.channels.telegram.enabled = true;
     const telegramDmPolicy = process.env.TELEGRAM_DM_POLICY || 'pairing';
     config.channels.telegram.dmPolicy = telegramDmPolicy;
-    // "open" policy requires allowFrom: ["*"]
-    if (telegramDmPolicy === 'open') {
+    if (process.env.TELEGRAM_DM_ALLOW_FROM) {
+        // Explicit allowlist: "123,456,789" → ['123', '456', '789']
+        config.channels.telegram.allowFrom = process.env.TELEGRAM_DM_ALLOW_FROM.split(',');
+    } else if (telegramDmPolicy === 'open') {
+        // "open" policy requires allowFrom: ["*"]
         config.channels.telegram.allowFrom = ['*'];
-    }
-    // Clean up invalid 'dm' sub-object from previous versions
-    delete config.channels.telegram.dm;
     }
 }
 
@@ -230,9 +205,12 @@ if (process.env.DISCORD_BOT_TOKEN) {
     config.channels.discord = config.channels.discord || {};
     config.channels.discord.token = process.env.DISCORD_BOT_TOKEN;
     config.channels.discord.enabled = true;
-    config.channels.discord.dmPolicy = process.env.DISCORD_DM_POLICY || 'pairing';
-    // Clean up invalid 'dm' sub-object from previous versions
-    delete config.channels.discord.dm;
+    const discordDmPolicy = process.env.DISCORD_DM_POLICY || 'pairing';
+    config.channels.discord.dm = config.channels.discord.dm || {};
+    config.channels.discord.dm.policy = discordDmPolicy;
+    // "open" policy requires allowFrom: ["*"]
+    if (discordDmPolicy === 'open') {
+        config.channels.discord.dm.allowFrom = ['*'];
     }
 }
 
@@ -250,7 +228,6 @@ if (process.env.SLACK_BOT_TOKEN && process.env.SLACK_APP_TOKEN) {
 //   https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/openai
 const baseUrl = (process.env.AI_GATEWAY_BASE_URL || process.env.ANTHROPIC_BASE_URL || '').replace(/\/+$/, '');
 const isOpenAI = baseUrl.endsWith('/openai');
-const isOpenRouter = baseUrl.includes('openrouter.ai');
 
 if (isOpenAI) {
     // Create custom openai provider config with baseUrl override
@@ -272,26 +249,6 @@ if (isOpenAI) {
     config.agents.defaults.models['openai/gpt-5.2'] = { alias: 'GPT-5.2' };
     config.agents.defaults.models['openai/gpt-5'] = { alias: 'GPT-5' };
     config.agents.defaults.models['openai/gpt-4.5-preview'] = { alias: 'GPT-4.5' };
-    config.agents.defaults.model.primary = 'openai/gpt-5.2';
-} else if (isOpenRouter) {
-    console.log('Configuring OpenRouter provider with base URL:', baseUrl);
-    config.models = config.models || {};
-    config.models.providers = config.models.providers || {};
-    config.models.providers.openai = {
-        baseUrl: baseUrl,
-        api: 'openai-responses', // OpenRouter usa formato OpenAI
-        models: [
-            // Agrega los modelos que quieres usar
-            { id: 'anthropic/claude-opus-4-5', name: 'Claude Opus 4', contextWindow: 200000 },
-            { id: 'anthropic/claude-sonnet-4-5', name: 'Claude Sonnet 4', contextWindow: 200000 },
-            { id: 'openai/gpt-5.2', name: 'GPT-4', contextWindow: 128000 },
-        ]
-    };
-    // Configura el API key
-    if (process.env.AI_GATEWAY_API_KEY) {
-        config.models.providers.openai.apiKey = process.env.AI_GATEWAY_API_KEY;
-    }
-    // Modelo por defecto
     config.agents.defaults.model.primary = 'openai/gpt-5.2';
 } else if (baseUrl) {
     console.log('Configuring Anthropic provider with base URL:', baseUrl);
@@ -319,96 +276,7 @@ if (isOpenAI) {
     config.agents.defaults.model.primary = 'anthropic/claude-opus-4-5-20251101';
 } else {
     // Default to Anthropic without custom base URL (uses built-in pi-ai catalog)
-    // config.agents.defaults.model.primary = 'openai/gpt-5.2';
-	// Default to OpenRouter Auto for intelligent routing
-    console.log('Configuring OpenRouter with comprehensive model catalog...');
-
-    // Add all model aliases with descriptions
-    // Format: alias, description (Specialty | Score | Cost In/Out)
-    config.agents.defaults.models = config.agents.defaults.models || {};
-
-    // Auto-routing
-    config.agents.defaults.models['openrouter/openrouter/auto'] = {
-        alias: 'auto',
-        description: 'Auto-route | Variable | Variable cost'
-    };
-
-    // General purpose / Default
-    config.agents.defaults.models['openrouter/deepseek/deepseek-chat-v3-0324'] = {
-        alias: 'deep',
-        description: 'Default/General | 68% SWE | $0.25/$0.38'
-    };
-
-    // Coding specialists
-    config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct'] = {
-        alias: 'qwen',
-        description: 'Coding | 81% SWE | $0.07/$0.16'
-    };
-    config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct:free'] = {
-        alias: 'qwenfree',
-        description: 'Coding (Free) | 81% SWE | FREE'
-    };
-    config.agents.defaults.models['openrouter/mistralai/devstral-small:free'] = {
-        alias: 'devstral',
-        description: 'Agentic Code | 70% SWE | FREE'
-    };
-    config.agents.defaults.models['openrouter/xiaomi/mimo-vl-7b:free'] = {
-        alias: 'mimo',
-        description: 'Budget/Free Coding | Strong free-tier | FREE'
-    };
-    config.agents.defaults.models['openrouter/x-ai/grok-code-fast-1'] = {
-        alias: 'grokcode',
-        description: 'Code | ~65% SWE | $0.20/$0.50'
-    };
-
-    // Agentic / Tools
-    config.agents.defaults.models['openrouter/x-ai/grok-4.1-fast'] = {
-        alias: 'grok',
-        description: 'Tools/Search/Agentic | #1 τ²-bench | $0.20/$0.50'
-    };
-    config.agents.defaults.models['openrouter/moonshotai/kimi-k2.5'] = {
-        alias: 'kimi',
-        description: 'Visual+Agents | 77% SWE, 78% MMMU | $0.15/$2.50'
-    };
-
-    // Speed / Fast
-    config.agents.defaults.models['openrouter/google/gemini-2.0-flash-001'] = {
-        alias: 'flash',
-        description: 'Speed/Fast Q&A | 1M context | $0.10/$0.40'
-    };
-
-    // Claude models
-    config.agents.defaults.models['openrouter/anthropic/claude-3.5-haiku'] = {
-        alias: 'haiku',
-        description: 'Fast Claude | 73% SWE | $1.00/$5.00'
-    };
-    config.agents.defaults.models['openrouter/anthropic/claude-sonnet-4'] = {
-        alias: 'sonnet',
-        description: 'Premium Reasoning | 77% SWE | $3.00/$15.00'
-    };
-
-    // OpenAI models
-    config.agents.defaults.models['openrouter/openai/gpt-4o-mini'] = {
-        alias: 'mini',
-        description: 'Light Tasks | Good all-round | $0.15/$0.60'
-    };
-    config.agents.defaults.models['openrouter/openai/gpt-4o'] = {
-        alias: 'gpt',
-        description: 'Vision/Tools | 84% MMMU | $2.50/$10.00'
-    };
-
-    // Reasoning models
-    config.agents.defaults.models['openrouter/deepseek/deepseek-reasoner'] = {
-        alias: 'think',
-        description: 'Deep Reasoning | 74% AIME | $0.55/$2.19'
-    };
-    config.agents.defaults.models['openrouter/qwen/qwq-32b-preview'] = {
-        alias: 'qwq',
-        description: 'Budget Reasoning/Math | Strong math | $0.15/$0.40'
-    };
-
-    // Set OpenRouter Auto as default for intelligent routing
-    config.agents.defaults.model.primary = 'openrouter/openrouter/auto';
+    config.agents.defaults.model.primary = 'anthropic/claude-opus-4-5';
 }
 
 // Write updated config
