@@ -11,8 +11,8 @@ export function buildEnvVars(env: MoltbotEnv): Record<string, string> {
 
   // Normalize the base URL by removing trailing slashes
   const normalizedBaseUrl = env.AI_GATEWAY_BASE_URL?.replace(/\/+$/, '');
-  //const isOpenAIGateway = normalizedBaseUrl?.endsWith('/openai');
-  const isOpenAIGateway = normalizedBaseUrl?.endsWith('/openai') || normalizedBaseUrl?.includes('openrouter.ai');
+  const isOpenAIGateway = normalizedBaseUrl?.endsWith('/openai');
+  //const isOpenAIGateway = normalizedBaseUrl?.endsWith('/openai') || normalizedBaseUrl?.includes('openrouter.ai');
 
   // AI Gateway vars take precedence
   // Map to the appropriate provider env var based on the gateway endpoint
@@ -54,6 +54,7 @@ export function buildEnvVars(env: MoltbotEnv): Record<string, string> {
   if (env.DISCORD_DM_POLICY) envVars.DISCORD_DM_POLICY = env.DISCORD_DM_POLICY;
   if (env.SLACK_BOT_TOKEN) envVars.SLACK_BOT_TOKEN = env.SLACK_BOT_TOKEN;
   if (env.SLACK_APP_TOKEN) envVars.SLACK_APP_TOKEN = env.SLACK_APP_TOKEN;
+  if (env.OPENROUTER_API_KEY) envVars.OPENROUTER_API_KEY = env.OPENROUTER_API_KEY;
   if (env.CDP_SECRET) envVars.CDP_SECRET = env.CDP_SECRET;
   if (env.WORKER_URL) envVars.WORKER_URL = env.WORKER_URL;
 
