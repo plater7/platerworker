@@ -271,31 +271,31 @@ if (isOpenAI) {
     // Omit apiKey so moltbot falls back to OPENAI_API_KEY env var
     // console.log('Configuring OpenAI provider with base URL:', baseUrl);
     console.log('Configuring OpenRouter with multiple models...');
-		
+	
+	// Add all model aliases	
 	config.models = config.models || {};
     config.models.providers = config.models.providers || {};
-    // Add all model aliases   
     config.agents.defaults.models = config.agents.defaults.models || {};
 	console.log('Add all models...');
-	//config.models.providers.openai = {
-    //    baseUrl: baseUrl,
-    //    api: 'openai-responses',
-    //    models: [
-	//		{ id: 'openrouter/openrouter/auto' },
-    //       { id: 'openrouter/openrouter/free' },
-	//		{ id: 'openrouter/z-ai/glm-4.5-air:free' },
-    //    ]
-    //};
-	//console.log('Base models adquired');
+	config.models.providers.openai = {
+        baseUrl: baseUrl,
+        api: 'openai-responses',
+        models: [
+			{ id: 'openai/gpt-5.2' },
+            { id: 'openai/gpt-5' },
+			{ id: 'openai/gpt-4.5-preview' },
+        ]
+    };
+	console.log('Base models adquired');
     	
 	// Add models to the allowlist so they appear in /models
     // OpenAI models
-	//config.agents.defaults.models['openai/gpt-5.2'] = { alias: 'gpt-5.2' };
-    //config.agents.defaults.models['openai/gpt-5'] = { alias: 'gpt-5' };
-    //config.agents.defaults.models['openai/gpt-4.5-preview'] = { alias: 'gpt-4.5' };
+	config.agents.defaults.models['openai/gpt-5.2'] = { alias: 'gpt-5.2' };
+    config.agents.defaults.models['openai/gpt-5'] = { alias: 'gpt-5' };
+    config.agents.defaults.models['openai/gpt-4.5-preview'] = { alias: 'gpt-4.5' };
 	//config.agents.defaults.models['openrouter/openai/gpt-4o-mini'] = { alias: 'mini' };
     //config.agents.defaults.models['openrouter/openai/gpt-4o'] = { alias: 'gpt',  };
-    // General purpose
+   	// General purpose
     //config.agents.defaults.models['openrouter/deepseek/deepseek-chat-v3-0324'] = { alias: 'deep' };
     // Coding specialists
     //config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct'] = { alias: 'qwen' };
@@ -315,13 +315,13 @@ if (isOpenAI) {
     //config.agents.defaults.models['openrouter/deepseek/deepseek-reasoner'] = { alias: 'think' };
     //config.agents.defaults.models['openrouter/qwen/qwq-32b-preview'] = { alias: 'qwq' };
     // GLM
-    //config.agents.defaults.models['openrouter/z-ai/glm-4.5-air:free'] = { alias: 'glm-4.5' };
+    config.agents.defaults.models['openrouter/z-ai/glm-4.5-air:free'] = { alias: 'glm-4.5' };
     config.agents.defaults.models['openrouter/z-ai/glm-4.7'] = { alias: 'glm-4.7' };
-    // Auto-routing
-    //config.agents.defaults.models['openrouter/openrouter/auto'] = { alias: 'auto' };
-    // OpenRouter Free router
-    //config.agents.defaults.models['openrouter/openrouter/free'] = { alias: 'freerouter' };
-
+   // Auto-routing
+    config.agents.defaults.models['openrouter/openrouter/auto'] = { alias: 'auto' };
+   // OpenRouter Free router
+    config.agents.defaults.models['openrouter/openrouter/free'] = { alias: 'freerouter' };
+	
 	config.agents.defaults.model.primary = 'openrouter/z-ai/glm-4.5-air:free';	
 	console.log('Set GLM-4.5 Free as primary');
 } else if (baseUrl) {
@@ -381,4 +381,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 014
+# 017
