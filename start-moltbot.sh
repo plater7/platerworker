@@ -396,6 +396,11 @@ if (isOpenAI) {
         alias: 'qwq',
         description: 'Budget Reasoning/Math | Strong math | $0.15/$0.40'
     };
+    // OpenRouter Free router
+    config.agents.defaults.models['openrouter/openrouter/free'] = {
+	alias: 'freerouter',
+	description: 'https://openrouter.ai/openrouter/free'
+    };
 
     // Set OpenRouter Auto as default for intelligent routing
     config.agents.defaults.model.primary = 'openrouter/openrouter/auto';
