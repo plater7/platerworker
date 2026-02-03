@@ -215,13 +215,7 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
     const telegramDmPolicy = process.env.TELEGRAM_DM_POLICY || 'pairing';
     config.channels.telegram.dmPolicy = telegramDmPolicy;
     // "open" policy requires allowFrom: ["*"]
-    if (process.env.TELEGRAM_DM_ALLOW_FROM) {
-        // Explicit allowlist: "123,456,789" → ['123', '456', '789']
-        config.channels.telegram.allowFrom = process.env.TELEGRAM_DM_ALLOW_FROM.split(',');
-    } else if (telegramDmPolicy === 'open') {
-        // "open" policy requires allowFrom: ["*"]
-    } else if (telegramDmPolicy === 'open') {
-        // "open" policy requires allowFrom: ["*"]
+    if (telegramDmPolicy === 'open') {
         config.channels.telegram.allowFrom = ['*'];
     }
 }
