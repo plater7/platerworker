@@ -22,7 +22,6 @@ RUN npm install -g pnpm
 
 # Install moltbot (CLI is still named clawdbot until upstream renames)
 # Pin to specific version for reproducible builds
-# Build cache bust: v2026.1.24-004
 RUN npm install -g clawdbot@2026.1.24-3 \
     && clawdbot --version
 
@@ -34,12 +33,11 @@ RUN mkdir -p /root/.clawdbot \
     && mkdir -p /root/clawd/skills
 
 # Copy startup script
-# Build cache bust: v2026.1.24-004
+# Build cache bust: 2026-01-28-v26-browser-skill
 COPY start-moltbot.sh /usr/local/bin/start-moltbot.sh
 RUN chmod +x /usr/local/bin/start-moltbot.sh
 
 # Copy default configuration template
-# Rebuilt at v2026.1.24-004
 COPY moltbot.json.template /root/.clawdbot-templates/moltbot.json.template
 
 # Copy custom skills

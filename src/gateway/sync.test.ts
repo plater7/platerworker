@@ -115,7 +115,7 @@ describe('syncToR2', () => {
       expect(rsyncCall).toContain('--delete');
       expect(rsyncCall).toContain('/root/.clawdbot/');
       expect(rsyncCall).toContain('/data/moltbot/');
-	  // Should also sync full workspace (not just skills)
+      // Should also sync full workspace (not just skills)
       expect(rsyncCall).toContain('/root/clawd/');
       expect(rsyncCall).toContain('/data/moltbot/clawd/');
       // Should exclude .git and node_modules from workspace sync

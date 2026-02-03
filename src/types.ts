@@ -12,7 +12,6 @@ export interface MoltbotEnv {
   AI_GATEWAY_BASE_URL?: string; // AI Gateway URL (e.g., https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/anthropic)
   // Legacy direct provider configuration (fallback)
   ANTHROPIC_API_KEY?: string;
-  OPENROUTER_API_KEY?: string;
   ANTHROPIC_BASE_URL?: string;
   OPENAI_API_KEY?: string;
   MOLTBOT_GATEWAY_TOKEN?: string; // Gateway token (mapped to CLAWDBOT_GATEWAY_TOKEN for container)
@@ -34,6 +33,7 @@ export interface MoltbotEnv {
   // R2 credentials for bucket mounting (set via wrangler secret)
   R2_ACCESS_KEY_ID?: string;
   R2_SECRET_ACCESS_KEY?: string;
+  R2_BUCKET_NAME?: string; // Override bucket name (default: 'moltbot-data')
   CF_ACCOUNT_ID?: string; // Cloudflare account ID for R2 endpoint
   // Browser Rendering binding for CDP shim
   BROWSER?: Fetcher;
