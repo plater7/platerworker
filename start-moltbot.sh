@@ -177,7 +177,17 @@ if (config.models?.providers?.anthropic?.models) {
     }
 }
 
-
+// Clean up invalid openrouter provider config (OpenRouter uses built-in support, no providers config needed)
+if (config.models?.providers?.openrouter) {
+    console.log('Removing invalid models.providers.openrouter block');
+    delete config.models.providers.openrouter;
+    if (config.models.providers && Object.keys(config.models.providers).length === 0) {
+        delete config.models.providers;
+    }
+    if (config.models && Object.keys(config.models).length === 0) {
+        delete config.models;
+    }
+}
 
 // Gateway configuration
 config.gateway.port = 18789;
