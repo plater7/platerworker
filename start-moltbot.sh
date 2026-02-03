@@ -273,6 +273,26 @@ if (isOpenAI) {
     config.agents.defaults.models['openai/gpt-5'] = { alias: 'GPT-5' };
     config.agents.defaults.models['openai/gpt-4.5-preview'] = { alias: 'GPT-4.5' };
     config.agents.defaults.model.primary = 'openai/gpt-5.2';
+} else if (isOpenRouter) {
+    console.log('Configuring OpenRouter provider with base URL:', baseUrl);
+    config.models = config.models || {};
+    config.models.providers = config.models.providers || {};
+    config.models.providers.openai = {
+        baseUrl: baseUrl,
+        api: 'openai-responses', // OpenRouter usa formato OpenAI
+        models: [
+            // Agrega los modelos que quieres usar
+            { id: 'anthropic/claude-opus-4-5', name: 'Claude Opus 4', contextWindow: 200000 },
+            { id: 'anthropic/claude-sonnet-4-5', name: 'Claude Sonnet 4', contextWindow: 200000 },
+            { id: 'openai/gpt-5.2', name: 'GPT-4', contextWindow: 128000 },
+        ]
+    };
+    // Configura el API key
+    if (process.env.AI_GATEWAY_API_KEY) {
+        config.models.providers.openai.apiKey = process.env.AI_GATEWAY_API_KEY;
+    }
+    // Modelo por defecto
+    config.agents.defaults.model.primary = 'openai/gpt-5.2';
 } else if (baseUrl) {
     console.log('Configuring Anthropic provider with base URL:', baseUrl);
     config.models = config.models || {};
