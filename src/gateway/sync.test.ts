@@ -115,6 +115,15 @@ describe('syncToR2', () => {
       expect(rsyncCall).toContain('--delete');
       expect(rsyncCall).toContain('/root/.clawdbot/');
       expect(rsyncCall).toContain('/data/moltbot/');
+      // Should also sync full workspace (not just skills)
+      expect(rsyncCall).toContain('/root/clawd/');
+      expect(rsyncCall).toContain('/data/moltbot/clawd/');
+      // Should exclude .git and node_modules from workspace sync
+      expect(rsyncCall).toContain("--exclude='.git'");
+      expect(rsyncCall).toContain("--exclude='node_modules'");
+      // Should still sync legacy skills path for backwards compatibility
+      expect(rsyncCall).toContain('/root/clawd/skills/');
+      expect(rsyncCall).toContain('/data/moltbot/skills/');
     });
   });
 });
