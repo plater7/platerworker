@@ -277,16 +277,16 @@ if (isOpenAI) {
     // Add all model aliases   
     config.agents.defaults.models = config.agents.defaults.models || {};
 	console.log('Add all models...');
-	config.models.providers.openai = {
-        baseUrl: baseUrl,
-        api: 'openai-responses',
-        models: [
-			{ id: 'openrouter/openrouter/auto' },
-            { id: 'openrouter/openrouter/free' },
-			{ id: 'openrouter/z-ai/glm-4.5-air:free' },
-        ]
-    };
-	console.log('Base models adquired');
+	//config.models.providers.openai = {
+    //    baseUrl: baseUrl,
+    //    api: 'openai-responses',
+    //    models: [
+	//		{ id: 'openrouter/openrouter/auto' },
+    //       { id: 'openrouter/openrouter/free' },
+	//		{ id: 'openrouter/z-ai/glm-4.5-air:free' },
+    //    ]
+    //};
+	//console.log('Base models adquired');
     	
 	// Add models to the allowlist so they appear in /models
     // OpenAI models
@@ -322,8 +322,8 @@ if (isOpenAI) {
     // OpenRouter Free router
     config.agents.defaults.models['openrouter/openrouter/free'] = { alias: 'freerouter' };
 
-	console.log('Set GLM-4.5 Free as primary');
 	config.agents.defaults.model.primary = 'openrouter/z-ai/glm-4.5-air:free';	
+	console.log('Set GLM-4.5 Free as primary');
 } else if (baseUrl) {
     console.log('Configuring Anthropic provider with base URL:', baseUrl);
     config.models = config.models || {};
@@ -381,4 +381,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 011
+# 012
