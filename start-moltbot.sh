@@ -413,7 +413,7 @@ config.agents.defaults.models['openrouter/z-ai/glm-4.7'] = {
     };
 
     // Set OpenRouter Auto as default for intelligent routing
-    config.agents.defaults.model.primary = 'openrouter/openrouter/auto';
+    config.agents.defaults.model.primary = 'openrouter/deepseek/deepseek-chat-v3-0324';
 }
 
 // Write updated config
@@ -443,4 +443,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 001
+# 002
