@@ -296,7 +296,7 @@ if (isOpenAI) {
 
     // Auto-routing / Free-routing
     config.agents.defaults.models['openrouter/auto'] = { alias: 'auto' };
-	config.agents.defaults.models['openrouter/freerouter'] = { alias: 'freerouter' };
+	config.agents.defaults.models['openrouter/free'] = { alias: 'free' };
 	
     // General purpose
     config.agents.defaults.models['openrouter/deepseek/deepseek-chat-v3-0324'] = { alias: 'deep' };
@@ -305,7 +305,7 @@ if (isOpenAI) {
     config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct'] = { alias: 'qwen' };
     config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct:free'] = { alias: 'qwenfree' };
     config.agents.defaults.models['openrouter/mistralai/devstral-small:free'] = { alias: 'devstral' };
-    config.agents.defaults.models['openrouter/xiaomi/mimo-vl-7b:free'] = { alias: 'mimo' };
+    config.agents.defaults.models['openrouter/xiaomi/mimo-vl-7b:free'] = { alias: 'mimofree' };
     config.agents.defaults.models['openrouter/x-ai/grok-code-fast-1'] = { alias: 'grokcode' };
 
     // Agentic / Tools
@@ -328,8 +328,8 @@ if (isOpenAI) {
     config.agents.defaults.models['openrouter/qwen/qwq-32b-preview'] = { alias: 'qwq' };
 
 	// GLM
-    config.agents.defaults.models['openrouter/z-ai/glm-4.7'] = { alias: 'GLM 4.7' };
-    config.agents.defaults.models['openrouter/z-ai/glm-4.5-air:free'] = { alias: 'GLM 4.5' };
+    config.agents.defaults.models['openrouter/z-ai/glm-4.7'] = { alias: 'glm-4.7' };
+    config.agents.defaults.models['openrouter/z-ai/glm-4.5-air:free'] = { alias: 'glmfree' };
 	
 	// Primary
     config.agents.defaults.model.primary = 'openrouter/free';
@@ -366,7 +366,7 @@ if (isOpenAI) {
 
     // Auto-routing / Free-routing
     config.agents.defaults.models['openrouter/auto'] = { alias: 'auto' };
-	config.agents.defaults.models['openrouter/freerouter'] = { alias: 'freerouter' };
+	config.agents.defaults.models['openrouter/free'] = { alias: 'free' };
 	
     // General purpose
     config.agents.defaults.models['openrouter/deepseek/deepseek-chat-v3-0324'] = { alias: 'deep' };
@@ -375,7 +375,7 @@ if (isOpenAI) {
     config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct'] = { alias: 'qwen' };
     config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct:free'] = { alias: 'qwenfree' };
     config.agents.defaults.models['openrouter/mistralai/devstral-small:free'] = { alias: 'devstral' };
-    config.agents.defaults.models['openrouter/xiaomi/mimo-vl-7b:free'] = { alias: 'mimo' };
+    config.agents.defaults.models['openrouter/xiaomi/mimo-vl-7b:free'] = { alias: 'mimofree' };
     config.agents.defaults.models['openrouter/x-ai/grok-code-fast-1'] = { alias: 'grokcode' };
 
     // Agentic / Tools
@@ -428,4 +428,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 024
+# 025
