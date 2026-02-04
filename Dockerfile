@@ -37,7 +37,7 @@ RUN mkdir -p /root/.clawdbot \
 COPY start-moltbot.sh /usr/local/bin/start-moltbot.sh
 RUN chmod +x /usr/local/bin/start-moltbot.sh
 
-# Copy default configuration template\
+# Copy default configuration template
 # Build cache bust: 025
 COPY moltbot.json.template /root/.clawdbot-templates/moltbot.json.template
 

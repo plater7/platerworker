@@ -105,6 +105,9 @@ if [ -d "$BACKUP_DIR/skills" ] && [ "$(ls -A $BACKUP_DIR/skills 2>/dev/null)" ];
     fi
 fi
 
+# Ensure workspace directory exists (even after restore)
+mkdir -p "/root/.clawdbot/workspace"
+
 # If config file still doesn't exist, create from template
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "No existing config found, initializing from template..."
@@ -153,6 +156,54 @@ config.agents.defaults.model = config.agents.defaults.model || {};
 config.gateway = config.gateway || {};
 config.channels = config.channels || {};
 
+// Helper function to configure OpenRouter models
+function configureOpenRouterModels() {
+    console.log('Configuring OpenRouter with multiple models...');
+
+    // Add all model aliases (description not supported by clawdbot schema)
+    config.agents.defaults.models = config.agents.defaults.models || {};
+
+    // Auto-routing / Free-routing
+    config.agents.defaults.models['openrouter/auto'] = { alias: 'auto' };
+    config.agents.defaults.models['openrouter/free'] = { alias: 'free' };
+
+    // General purpose
+    config.agents.defaults.models['openrouter/deepseek/deepseek-chat-v3-0324'] = { alias: 'deep' };
+
+    // Coding specialists
+    config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct'] = { alias: 'qwen' };
+    config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct:free'] = { alias: 'qwenfree' };
+    config.agents.defaults.models['openrouter/mistralai/devstral-small:free'] = { alias: 'devstral' };
+    config.agents.defaults.models['openrouter/xiaomi/mimo-vl-7b:free'] = { alias: 'mimofree' };
+    config.agents.defaults.models['openrouter/x-ai/grok-code-fast-1'] = { alias: 'grokcode' };
+
+    // Agentic / Tools
+    config.agents.defaults.models['openrouter/x-ai/grok-4.1-fast'] = { alias: 'grok' };
+    config.agents.defaults.models['openrouter/moonshotai/kimi-k2.5'] = { alias: 'kimi' };
+
+    // Speed / Fast
+    config.agents.defaults.models['openrouter/google/gemini-2.0-flash-001'] = { alias: 'flash' };
+
+    // Claude models
+    config.agents.defaults.models['openrouter/anthropic/claude-3.5-haiku'] = { alias: 'haiku' };
+    config.agents.defaults.models['openrouter/anthropic/claude-sonnet-4'] = { alias: 'sonnet' };
+
+    // OpenAI models
+    config.agents.defaults.models['openrouter/openai/gpt-4o-mini'] = { alias: 'mini' };
+    config.agents.defaults.models['openrouter/openai/gpt-4o'] = { alias: 'gpt' };
+
+    // Reasoning models
+    config.agents.defaults.models['openrouter/deepseek/deepseek-reasoner'] = { alias: 'think' };
+    config.agents.defaults.models['openrouter/qwen/qwq-32b-preview'] = { alias: 'qwq' };
+
+    // GLM
+    config.agents.defaults.models['openrouter/z-ai/glm-4.7'] = { alias: 'glm-4.7' };
+    config.agents.defaults.models['openrouter/z-ai/glm-4.5-air:free'] = { alias: 'glmfree' };
+
+    // Primary
+    config.agents.defaults.model.primary = 'openrouter/free';
+}
+
 // Clean up any broken anthropic provider config from previous runs
 // (older versions didn't include required 'name' field)
 if (config.models?.providers?.anthropic?.models) {
@@ -160,31 +211,7 @@ if (config.models?.providers?.anthropic?.models) {
     if (hasInvalidModels) {
         console.log('Removing broken anthropic provider config (missing model names)');
         delete config.models.providers.anthropic;
-
-// Clean up invalid openrouter provider config (OpenRouter uses built-in support, no providers config needed)
-if (config.models?.providers?.openrouter) {
-    console.log('Removing invalid models.providers.openrouter block');
-    delete config.models.providers.openrouter;
-    if (config.models.providers && Object.keys(config.models.providers).length === 0) {
-        delete config.models.providers;
     }
-    if (config.models && Object.keys(config.models).length === 0) {
-        delete config.models;
-    }
-}
-    }
-
-// Clean up invalid openrouter provider config (OpenRouter uses built-in support, no providers config needed)
-if (config.models?.providers?.openrouter) {
-    console.log('Removing invalid models.providers.openrouter block');
-    delete config.models.providers.openrouter;
-    if (config.models.providers && Object.keys(config.models.providers).length === 0) {
-        delete config.models.providers;
-    }
-    if (config.models && Object.keys(config.models).length === 0) {
-        delete config.models;
-    }
-}
 }
 
 // Clean up invalid openrouter provider config (OpenRouter uses built-in support, no providers config needed)
@@ -288,51 +315,7 @@ if (isOpenAI) {
     config.agents.defaults.models['openai/gpt-4.5-preview'] = { alias: 'GPT-4.5' };
     config.agents.defaults.model.primary = 'openai/gpt-5.2';
 } else if (isOpenRouter) {
-        // Default to OpenRouter Auto for intelligent routing
-    console.log('Configuring OpenRouter with multiple models...');
-
-    // Add all model aliases (description not supported by clawdbot schema)
-    config.agents.defaults.models = config.agents.defaults.models || {};
-
-    // Auto-routing / Free-routing
-    config.agents.defaults.models['openrouter/auto'] = { alias: 'auto' };
-	config.agents.defaults.models['openrouter/free'] = { alias: 'free' };
-	
-    // General purpose
-    config.agents.defaults.models['openrouter/deepseek/deepseek-chat-v3-0324'] = { alias: 'deep' };
-
-    // Coding specialists
-    config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct'] = { alias: 'qwen' };
-    config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct:free'] = { alias: 'qwenfree' };
-    config.agents.defaults.models['openrouter/mistralai/devstral-small:free'] = { alias: 'devstral' };
-    config.agents.defaults.models['openrouter/xiaomi/mimo-vl-7b:free'] = { alias: 'mimofree' };
-    config.agents.defaults.models['openrouter/x-ai/grok-code-fast-1'] = { alias: 'grokcode' };
-
-    // Agentic / Tools
-    config.agents.defaults.models['openrouter/x-ai/grok-4.1-fast'] = { alias: 'grok' };
-    config.agents.defaults.models['openrouter/moonshotai/kimi-k2.5'] = { alias: 'kimi' };
-
-    // Speed / Fast
-    config.agents.defaults.models['openrouter/google/gemini-2.0-flash-001'] = { alias: 'flash' };
-
-    // Claude models
-    config.agents.defaults.models['openrouter/anthropic/claude-3.5-haiku'] = { alias: 'haiku' };
-    config.agents.defaults.models['openrouter/anthropic/claude-sonnet-4'] = { alias: 'sonnet' };
-
-    // OpenAI models
-    config.agents.defaults.models['openrouter/openai/gpt-4o-mini'] = { alias: 'mini' };
-    config.agents.defaults.models['openrouter/openai/gpt-4o'] = { alias: 'gpt' };
-
-    // Reasoning models
-    config.agents.defaults.models['openrouter/deepseek/deepseek-reasoner'] = { alias: 'think' };
-    config.agents.defaults.models['openrouter/qwen/qwq-32b-preview'] = { alias: 'qwq' };
-
-	// GLM
-    config.agents.defaults.models['openrouter/z-ai/glm-4.7'] = { alias: 'glm-4.7' };
-    config.agents.defaults.models['openrouter/z-ai/glm-4.5-air:free'] = { alias: 'glmfree' };
-	
-	// Primary
-    config.agents.defaults.model.primary = 'openrouter/free';
+    configureOpenRouterModels();
 } else if (baseUrl) {
     console.log('Configuring Anthropic provider with base URL:', baseUrl);
     config.models = config.models || {};
@@ -358,47 +341,8 @@ if (isOpenAI) {
     config.agents.defaults.models['anthropic/claude-haiku-4-5-20251001'] = { alias: 'Haiku 4.5' };
     config.agents.defaults.model.primary = 'anthropic/claude-opus-4-5-20251101';
 } else {
-    // Default to OpenRouter Auto for intelligent routing
-    console.log('Configuring OpenRouter with multiple models...');
-
-    // Add all model aliases (description not supported by clawdbot schema)
-    config.agents.defaults.models = config.agents.defaults.models || {};
-
-    // Auto-routing / Free-routing
-    config.agents.defaults.models['openrouter/auto'] = { alias: 'auto' };
-	config.agents.defaults.models['openrouter/free'] = { alias: 'free' };
-	
-    // General purpose
-    config.agents.defaults.models['openrouter/deepseek/deepseek-chat-v3-0324'] = { alias: 'deep' };
-
-    // Coding specialists
-    config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct'] = { alias: 'qwen' };
-    config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct:free'] = { alias: 'qwenfree' };
-    config.agents.defaults.models['openrouter/mistralai/devstral-small:free'] = { alias: 'devstral' };
-    config.agents.defaults.models['openrouter/xiaomi/mimo-vl-7b:free'] = { alias: 'mimofree' };
-    config.agents.defaults.models['openrouter/x-ai/grok-code-fast-1'] = { alias: 'grokcode' };
-
-    // Agentic / Tools
-    config.agents.defaults.models['openrouter/x-ai/grok-4.1-fast'] = { alias: 'grok' };
-    config.agents.defaults.models['openrouter/moonshotai/kimi-k2.5'] = { alias: 'kimi' };
-
-    // Speed / Fast
-    config.agents.defaults.models['openrouter/google/gemini-2.0-flash-001'] = { alias: 'flash' };
-
-    // Claude models
-    config.agents.defaults.models['openrouter/anthropic/claude-3.5-haiku'] = { alias: 'haiku' };
-    config.agents.defaults.models['openrouter/anthropic/claude-sonnet-4'] = { alias: 'sonnet' };
-
-    // OpenAI models
-    config.agents.defaults.models['openrouter/openai/gpt-4o-mini'] = { alias: 'mini' };
-    config.agents.defaults.models['openrouter/openai/gpt-4o'] = { alias: 'gpt' };
-
-    // Reasoning models
-    config.agents.defaults.models['openrouter/deepseek/deepseek-reasoner'] = { alias: 'think' };
-    config.agents.defaults.models['openrouter/qwen/qwq-32b-preview'] = { alias: 'qwq' };
-
-    // Set OpenRouter Auto as default for intelligent routing
-    config.agents.defaults.model.primary = 'openrouter/auto';
+    // Default to OpenRouter for intelligent routing
+    configureOpenRouterModels();
 }
 
 // Write updated config
