@@ -204,6 +204,43 @@ function configureOpenRouterModels() {
     config.agents.defaults.model.primary = 'openrouter/free';
 }
 
+// Helper function to configure Nvidia NIM models
+function configureNvidiaModels() {
+    console.log('Configuring Nvidia API with NIM models...');
+
+    // Add all Nvidia NIM model aliases
+    config.agents.defaults.models = config.agents.defaults.models || {};
+
+    // Moonshot AI - Kimi models
+    config.agents.defaults.models['nvidia/moonshotai/kimi-k2.5'] = { alias: 'kimi' };
+    config.agents.defaults.models['nvidia/moonshotai/moonshot-v1-8k'] = { alias: 'moonshot8k' };
+    config.agents.defaults.models['nvidia/moonshotai/moonshot-v1-32k'] = { alias: 'moonshot32k' };
+    config.agents.defaults.models['nvidia/moonshotai/moonshot-v1-128k'] = { alias: 'moonshot128k' };
+
+    // Meta Llama models
+    config.agents.defaults.models['nvidia/meta/llama-3.3-70b-instruct'] = { alias: 'llama70b' };
+    config.agents.defaults.models['nvidia/meta/llama-3.1-405b-instruct'] = { alias: 'llama405b' };
+
+    // Mistral models
+    config.agents.defaults.models['nvidia/mistralai/mistral-large-2-instruct'] = { alias: 'mistral' };
+    config.agents.defaults.models['nvidia/mistralai/mixtral-8x7b-instruct'] = { alias: 'mixtral' };
+
+    // Google models
+    config.agents.defaults.models['nvidia/google/gemma-2-27b-it'] = { alias: 'gemma27b' };
+
+    // Nvidia proprietary
+    config.agents.defaults.models['nvidia/nvidia/llama-3.1-nemotron-70b-instruct'] = { alias: 'nemotron' };
+
+    // IBM Granite
+    config.agents.defaults.models['nvidia/ibm/granite-3.1-8b-instruct'] = { alias: 'granite' };
+
+    // DeepSeek
+    config.agents.defaults.models['nvidia/deepseek-ai/deepseek-r1'] = { alias: 'deepseek-r1' };
+
+    // Primary model - Kimi 2.5
+    config.agents.defaults.model.primary = 'nvidia/moonshotai/kimi-k2.5';
+}
+
 // Clean up any broken anthropic provider config from previous runs
 // (older versions didn't include required 'name' field)
 if (config.models?.providers?.anthropic?.models) {
@@ -292,6 +329,7 @@ if (process.env.SLACK_BOT_TOKEN && process.env.SLACK_APP_TOKEN) {
 const baseUrl = (process.env.AI_GATEWAY_BASE_URL || process.env.ANTHROPIC_BASE_URL || '').replace(/\/+$/, '');
 const isOpenAI = baseUrl.endsWith('/openai');
 const isOpenRouter = baseUrl.endsWith('openrouter.ai/api/v1');
+const isNvidia = baseUrl.includes('api.nvidia.com') || baseUrl.includes('integrate.api.nvidia.com');
 
 if (isOpenAI) {
     // Create custom openai provider config with baseUrl override
@@ -316,6 +354,17 @@ if (isOpenAI) {
     config.agents.defaults.model.primary = 'openai/gpt-5.2';
 } else if (isOpenRouter) {
     configureOpenRouterModels();
+} else if (isNvidia) {
+    // Configure Nvidia NIM models
+    console.log('Configuring Nvidia API with custom base URL:', baseUrl);
+    config.models = config.models || {};
+    config.models.providers = config.models.providers || {};
+    config.models.providers.nvidia = {
+        baseUrl: baseUrl,
+        apiKey: process.env.NVIDIA_API_KEY || process.env.AI_GATEWAY_API_KEY || ''
+    };
+
+    configureNvidiaModels();
 } else if (baseUrl) {
     console.log('Configuring Anthropic provider with base URL:', baseUrl);
     config.models = config.models || {};
@@ -341,8 +390,21 @@ if (isOpenAI) {
     config.agents.defaults.models['anthropic/claude-haiku-4-5-20251001'] = { alias: 'Haiku 4.5' };
     config.agents.defaults.model.primary = 'anthropic/claude-opus-4-5-20251101';
 } else {
-    // Default to OpenRouter for intelligent routing
-    configureOpenRouterModels();
+    // Check if NVIDIA_API_KEY is set
+    if (process.env.NVIDIA_API_KEY) {
+        console.log('Configuring Nvidia API with default endpoint');
+        config.models = config.models || {};
+        config.models.providers = config.models.providers || {};
+        config.models.providers.nvidia = {
+            baseUrl: 'https://integrate.api.nvidia.com/v1',
+            apiKey: process.env.NVIDIA_API_KEY
+        };
+
+        configureNvidiaModels();
+    } else {
+        // Default to OpenRouter Auto for intelligent routing
+        configureOpenRouterModels();
+    }
 }
 
 // Write updated config

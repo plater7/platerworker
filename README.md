@@ -83,7 +83,29 @@ echo "$MOLTBOT_GATEWAY_TOKEN" | npx wrangler secret put MOLTBOT_GATEWAY_TOKEN
 npm run deploy
 ```
 
-### Opción 3: Usar AI Gateway de Cloudflare
+### Opción 3: Usar Nvidia API (Kimi 2.5 y NIM models)
+
+```bash
+# Instalar dependencias
+npm install
+
+# Configurar Nvidia API Key (obtener en https://build.nvidia.com)
+npx wrangler secret put NVIDIA_API_KEY
+
+# Opcional: Configurar base URL personalizada
+npx wrangler secret put AI_GATEWAY_BASE_URL
+# Ingresar: https://integrate.api.nvidia.com/v1
+
+# Generar token de gateway
+export MOLTBOT_GATEWAY_TOKEN=$(openssl rand -hex 32)
+echo "Token del gateway: $MOLTBOT_GATEWAY_TOKEN"
+echo "$MOLTBOT_GATEWAY_TOKEN" | npx wrangler secret put MOLTBOT_GATEWAY_TOKEN
+
+# Desplegar
+npm run deploy
+```
+
+### Opción 4: Usar AI Gateway de Cloudflare
 
 ```bash
 # Instalar dependencias
@@ -210,6 +232,30 @@ Usa comandos con `/` seguido del alias del modelo:
 | `think` | deepseek-reasoner | Razonamiento profundo |
 | `flash` | gemini-2.0-flash | Google rápido |
 
+### Modelos Nvidia NIM disponibles
+
+Con Nvidia API, tienes acceso a modelos adicionales optimizados:
+
+| Alias | Modelo | Descripción |
+|-------|--------|-------------|
+| `kimi` | moonshotai/kimi-k2.5 | Kimi 2.5 - Excelente contexto largo |
+| `moonshot8k` | moonshot-v1-8k | Moonshot 8K context |
+| `moonshot32k` | moonshot-v1-32k | Moonshot 32K context |
+| `moonshot128k` | moonshot-v1-128k | Moonshot 128K context |
+| `llama70b` | llama-3.3-70b | Meta Llama 70B |
+| `llama405b` | llama-3.1-405b | Meta Llama 405B |
+| `mistral` | mistral-large-2 | Mistral Large 2 |
+| `mixtral` | mixtral-8x7b | Mixtral MoE |
+| `nemotron` | llama-nemotron-70b | Nvidia Nemotron |
+| `deepseek-r1` | deepseek-r1 | DeepSeek R1 reasoning |
+
+**Uso**:
+```
+/kimi Explica este concepto en detalle
+/llama405b Analiza este código complejo
+/deepseek-r1 Resuelve este problema (con razonamiento)
+```
+
 ### Configurar modelo por defecto
 
 El modelo por defecto es `openrouter/free` (free-routing automático). Para cambiarlo:
@@ -217,6 +263,64 @@ El modelo por defecto es `openrouter/free` (free-routing automático). Para camb
 1. Editar `moltbot.json.template` antes de desplegar
 2. O modificar `/root/.clawdbot/clawdbot.json` en el contenedor después del primer inicio
 3. O usar variable de entorno `MOLTBOT_DEFAULT_MODEL`
+
+## 🚀 Nvidia NIM - Configuración avanzada
+
+Nvidia NIM (Nvidia Inference Microservices) proporciona acceso a modelos optimizados de múltiples proveedores, incluyendo Kimi 2.5 de Moonshot AI.
+
+### Obtener API Key
+
+1. Visita [build.nvidia.com](https://build.nvidia.com)
+2. Crea una cuenta o inicia sesión
+3. Navega a la sección de API Keys
+4. Genera una nueva API key
+5. Copia la key (formato: `nvapi-XXXXXXXXXXXX`)
+
+### Configuración básica
+
+```bash
+# Configurar API key
+npx wrangler secret put NVIDIA_API_KEY
+# Pegar tu key: nvapi-XXXXXXXXXXXX
+
+# Redesplegar
+npm run deploy
+```
+
+### Usar con AI Gateway de Cloudflare
+
+Para routing, caching y analytics:
+
+```bash
+# Configurar ambas variables
+npx wrangler secret put NVIDIA_API_KEY
+npx wrangler secret put AI_GATEWAY_BASE_URL
+# Ingresar: https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/nvidia
+```
+
+### Características especiales de Kimi 2.5
+
+El modelo Kimi 2.5 soporta el parámetro `thinking` para razonamiento explícito:
+
+```javascript
+// En el código, esto se configura automáticamente
+{
+  "chat_template_kwargs": {"thinking": true}
+}
+```
+
+Para usar thinking mode en el chat:
+```
+/kimi --think Analiza este problema paso a paso
+```
+
+### Modelos recomendados según uso
+
+- **Contexto largo**: `/kimi`, `/moonshot128k` - Hasta 128K tokens
+- **Código**: `/nemotron`, `/llama70b` - Optimizados para programación
+- **Razonamiento**: `/deepseek-r1` - Chain-of-thought explícito
+- **General**: `/mistral`, `/llama405b` - Mejor calidad general
+- **Rápido**: `/moonshot8k`, `/mixtral` - Respuestas más rápidas
 
 ## 📚 Documentación adicional
 

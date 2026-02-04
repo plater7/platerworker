@@ -31,6 +31,13 @@ Thumbs.db
 .env.*
 !.env.example
 
+# API Keys and secrets
+*.key
+nvapi-*.txt
+
+# Test outputs
+scripts/test-output.json
+
 # TypeScript
 *.tsbuildinfo
 
