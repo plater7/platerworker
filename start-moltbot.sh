@@ -266,8 +266,6 @@ const baseUrl = (process.env.AI_GATEWAY_BASE_URL || process.env.ANTHROPIC_BASE_U
 const isOpenAI = baseUrl.endsWith('/openai');
 const isOpenRouter = baseUrl.endsWith('openrouter.ai/api/v1');
 
-const isOpenAI = baseUrl.endsWith('/openai');
-
 if (isOpenAI) {
     // Create custom openai provider config with baseUrl override
     // Omit apiKey so moltbot falls back to OPENAI_API_KEY env var
@@ -405,4 +403,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 020
+# 021
