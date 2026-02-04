@@ -179,7 +179,7 @@ function configureOpenRouterModels() {
 
     // Agentic / Tools
     config.agents.defaults.models['openrouter/x-ai/grok-4.1-fast'] = { alias: 'grok' };
-    config.agents.defaults.models['openrouter/moonshotai/kimi-k2.5'] = { alias: 'kimi' };
+    //config.agents.defaults.models['openrouter/moonshotai/kimi-k2.5'] = { alias: 'kimi' };
 
     // Speed / Fast
     config.agents.defaults.models['openrouter/google/gemini-2.0-flash-001'] = { alias: 'flash' };
@@ -434,4 +434,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 025
+# 027

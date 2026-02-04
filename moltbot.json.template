@@ -3,7 +3,7 @@
     "defaults": {
       "workspace": "/root/.clawdbot/workspace",
       "model": {
-        "primary": "glmfree"
+        "primary": "glm-4.7"
       }
     }
   },
