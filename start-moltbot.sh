@@ -295,8 +295,8 @@ if (isOpenAI) {
     config.agents.defaults.models = config.agents.defaults.models || {};
 
     // Auto-routing / Free-routing
-    config.agents.defaults.models['openrouter/openrouter/auto'] = { alias: 'auto' };
-	config.agents.defaults.models['openrouter/openrouter/freerouter'] = { alias: 'freerouter' };
+    config.agents.defaults.models['openrouter/auto'] = { alias: 'auto' };
+	config.agents.defaults.models['openrouter/freerouter'] = { alias: 'freerouter' };
 	
     // General purpose
     config.agents.defaults.models['openrouter/deepseek/deepseek-chat-v3-0324'] = { alias: 'deep' };
@@ -332,7 +332,7 @@ if (isOpenAI) {
     config.agents.defaults.models['openrouter/z-ai/glm-4.5-air:free'] = { alias: 'GLM 4.5' };
 	
 	// Primary
-    config.agents.defaults.model.primary = 'openrouter/z-ai/glm-4.5-air:free';
+    config.agents.defaults.model.primary = 'openrouter/free';
 } else if (baseUrl) {
     console.log('Configuring Anthropic provider with base URL:', baseUrl);
     config.models = config.models || {};
@@ -365,8 +365,8 @@ if (isOpenAI) {
     config.agents.defaults.models = config.agents.defaults.models || {};
 
     // Auto-routing / Free-routing
-    config.agents.defaults.models['openrouter/openrouter/auto'] = { alias: 'auto' };
-	config.agents.defaults.models['openrouter/openrouter/freerouter'] = { alias: 'freerouter' };
+    config.agents.defaults.models['openrouter/auto'] = { alias: 'auto' };
+	config.agents.defaults.models['openrouter/freerouter'] = { alias: 'freerouter' };
 	
     // General purpose
     config.agents.defaults.models['openrouter/deepseek/deepseek-chat-v3-0324'] = { alias: 'deep' };
@@ -398,7 +398,7 @@ if (isOpenAI) {
     config.agents.defaults.models['openrouter/qwen/qwq-32b-preview'] = { alias: 'qwq' };
 
     // Set OpenRouter Auto as default for intelligent routing
-    config.agents.defaults.model.primary = 'openrouter/openrouter/auto';
+    config.agents.defaults.model.primary = 'openrouter/auto';
 }
 
 // Write updated config
@@ -428,4 +428,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 023
+# 024
