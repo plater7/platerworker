@@ -277,15 +277,15 @@ if (isOpenAI) {
     config.models.providers = config.models.providers || {};
     config.agents.defaults.models = config.agents.defaults.models || {};
 	console.log('Add all models...');
-	//config.models.providers.openai = {
-    //    baseUrl: baseUrl,
-    //   api: 'openai-responses',
-    //    models: [
-	//		{ id: 'openai/gpt-5.2' },
-    //      { id: 'openai/gpt-5' },
-	//		{ id: 'openai/gpt-4.5-preview' },
-    //    ]
-    //};
+    config.models.providers.openai = {
+        baseUrl: baseUrl,
+        api: 'openai-responses',
+        models: [
+            { id: 'gpt-5.2', name: 'GPT-5.2', contextWindow: 200000 },
+            { id: 'gpt-5', name: 'GPT-5', contextWindow: 200000 },
+            { id: 'gpt-4.5-preview', name: 'GPT-4.5 Preview', contextWindow: 128000 },
+        ]
+    };
 	//console.log('Base models adquired');
     	
 	// Add models to the allowlist so they appear in /models
@@ -381,4 +381,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 018
+# 019
