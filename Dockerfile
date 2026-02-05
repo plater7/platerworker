@@ -20,6 +20,7 @@ RUN ARCH="$(dpkg --print-architecture)" \
 
 # Install pnpm globally
 # Build cache bust: 036
+RUN npm cache clean --force
 RUN npm install -g pnpm --strict-ssl=false
 
 # Install moltbot (CLI is still named clawdbot until upstream renames)
@@ -41,6 +42,7 @@ COPY start-moltbot.sh /usr/local/bin/start-moltbot.sh
 RUN chmod +x /usr/local/bin/start-moltbot.sh
 
 # Copy Clawdbot patch script
+# Build cache bust: 036
 COPY scripts/patch-clawdbot-nvidia.sh /usr/local/bin/patch-clawdbot-nvidia.sh
 RUN chmod +x /usr/local/bin/patch-clawdbot-nvidia.sh
 

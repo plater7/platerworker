@@ -25,3 +25,4 @@ else
     grep -A 5 "if (inlineMatch)" "$CLAWDBOT_MODEL_FILE" | head -7
     exit 1
 fi
+#037
