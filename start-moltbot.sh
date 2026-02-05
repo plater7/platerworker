@@ -8,6 +8,17 @@
 
 set -e
 
+# PATCH: Fix Nvidia provider bug in Clawdbot
+# This must run before any model configuration
+if [ -f "/usr/local/bin/patch-clawdbot-nvidia.sh" ]; then
+    echo "🔧 Applying Clawdbot patch for custom providers..."
+    /usr/local/bin/patch-clawdbot-nvidia.sh || {
+        echo "⚠️  Warning: Clawdbot patch failed, Nvidia provider may not work correctly"
+    }
+else
+    echo "⚠️  Warning: Clawdbot patch script not found, Nvidia provider may not work"
+fi
+
 # Check if clawdbot gateway is already running - bail early if so
 # Note: CLI is still named "clawdbot" until upstream renames it
 if pgrep -f "clawdbot gateway" > /dev/null 2>&1; then

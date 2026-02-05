@@ -414,6 +414,37 @@ La mayoría de la funcionalidad es idéntica a moltworker original. Consulta la 
 
 ## ⚠️ Problemas conocidos
 
+### Nvidia Provider Configuration Bug
+
+PlaterWorker includes an automatic patch for a bug in Clawdbot that prevents custom provider configurations from being properly inherited. This patch is applied automatically on container startup.
+
+**Symptoms without patch:**
+- Nvidia models fail with connection errors
+- Custom provider baseUrl/apiKey not used
+- Error: "Invalid API endpoint" or "Unauthorized"
+
+**Automatic fix:**
+The patch is applied by `scripts/patch-clawdbot-nvidia.sh` during container startup. You'll see:
+```
+🔧 Applying Clawdbot patch for custom providers...
+✅ Clawdbot patched successfully
+```
+
+**Verify patch:**
+```bash
+# Inside container
+/usr/local/bin/test-nvidia-patch.sh
+```
+
+**Manual fix (if automatic fails):**
+```bash
+# Inside container
+/usr/local/bin/patch-clawdbot-nvidia.sh
+```
+
+**Upstream issue:**
+This bug exists in OpenClaw/Clawdbot's compiled code. See `docs/CLAWDBOT_BUG_REPORT.md` for details. A fix has been proposed to the upstream project.
+
 ### Debido a modificaciones por IA
 - La configuración de modelos en `start-moltbot.sh` puede tener redundancias
 - Algunos nombres de modelos pueden quedar desactualizados

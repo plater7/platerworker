@@ -34,11 +34,16 @@ RUN mkdir -p /root/.clawdbot \
     && mkdir -p /root/clawd/skills
 
 # Copy startup script
-# Build cache bust: 034-nvidia-models-array-fix
+# Build cache bust: 027-nvidia-patch
 COPY start-moltbot.sh /usr/local/bin/start-moltbot.sh
 RUN chmod +x /usr/local/bin/start-moltbot.sh
 
+# Copy Clawdbot patch script
+COPY scripts/patch-clawdbot-nvidia.sh /usr/local/bin/patch-clawdbot-nvidia.sh
+RUN chmod +x /usr/local/bin/patch-clawdbot-nvidia.sh
+
 # Copy default configuration template
+# Build cache bust: 027-nvidia-patch
 COPY moltbot.json.template /root/.clawdbot-templates/moltbot.json.template
 
 # Copy custom skills
