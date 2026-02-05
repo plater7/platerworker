@@ -163,7 +163,7 @@ function configureOpenRouterModels() {
     config.models = config.models || {};
     config.models.providers = config.models.providers || {};
     config.models.providers.nvidia = {
-        baseUrl: baseUrl,
+        baseUrl: 'https://integrate.api.nvidia.com/v1',
         apiKey: process.env.NVIDIA_API_KEY || process.env.AI_GATEWAY_API_KEY || ''
     };
 
@@ -444,4 +444,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 031
+# 033
