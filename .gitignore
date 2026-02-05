@@ -71,3 +71,4 @@ test/e2e/.dev.vars
 
 # Claude
 .claude/
+.claude/*
