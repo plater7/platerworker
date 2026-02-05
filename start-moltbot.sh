@@ -429,7 +429,7 @@ if (isNvidiaGateway || process.env.NVIDIA_API_KEY) {
     config.models.providers.nvidia = {
         baseUrl: nvidiaBaseUrl,
         apiKey: nvidiaApiKey,
-        api: 'openai-responses',
+        //api: 'openai-responses',
         models: [
             { id: 'moonshotai/kimi-k2.5', name: 'Kimi 2.5', contextWindow: 200000 },
             { id: 'moonshotai/moonshot-v1-8k', name: 'Moonshot 8K', contextWindow: 8000 },
@@ -571,4 +571,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 035-fix-nvidia-anthropic-validation
+# 037

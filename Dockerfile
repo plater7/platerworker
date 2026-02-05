@@ -19,13 +19,13 @@ RUN ARCH="$(dpkg --print-architecture)" \
     && npm --version 
 
 # Install pnpm globally
-# Build cache bust: 036
+# Build cache bust: 037
 RUN npm cache clean --force
 RUN npm install -g pnpm --strict-ssl=false
 
 # Install moltbot (CLI is still named clawdbot until upstream renames)
 # Pin to specific version for reproducible builds
-# Build cache bust: 036
+# Build cache bust: 037
 RUN npm install -g clawdbot@2026.1.24-3 --strict-ssl=false \
     && clawdbot --version
 
@@ -37,12 +37,12 @@ RUN mkdir -p /root/.clawdbot \
     && mkdir -p /root/clawd/skills
 
 # Copy startup script
-# Build cache bust: 027-nvidia-patch
+# Build cache bust: 037
 COPY start-moltbot.sh /usr/local/bin/start-moltbot.sh
 RUN chmod +x /usr/local/bin/start-moltbot.sh
 
 # Copy Clawdbot patch script
-# Build cache bust: 036
+# Build cache bust: 037
 COPY scripts/patch-clawdbot-nvidia.sh /usr/local/bin/patch-clawdbot-nvidia.sh
 RUN chmod +x /usr/local/bin/patch-clawdbot-nvidia.sh
 
@@ -58,4 +58,4 @@ WORKDIR /root/clawd
 
 # Expose the gateway port
 EXPOSE 18789
-# 036
+# 037
