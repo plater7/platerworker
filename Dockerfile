@@ -4,7 +4,7 @@ FROM docker.io/cloudflare/sandbox:0.7.0
 # The base image has Node 20, we need to replace it with Node 22
 # Using direct binary download for reliability
 ENV NODE_VERSION=22.13.1
-# Build cache bust: 030
+# Build cache bust: 033-multi-provider-support
 RUN ARCH="$(dpkg --print-architecture)" \
     && case "${ARCH}" in \
          amd64) NODE_ARCH="x64" ;; \
@@ -34,7 +34,7 @@ RUN mkdir -p /root/.clawdbot \
     && mkdir -p /root/clawd/skills
 
 # Copy startup script
-# Build cache bust: 030
+# Build cache bust: 033-multi-provider-support
 COPY start-moltbot.sh /usr/local/bin/start-moltbot.sh
 RUN chmod +x /usr/local/bin/start-moltbot.sh
 
@@ -49,4 +49,4 @@ WORKDIR /root/clawd
 
 # Expose the gateway port
 EXPOSE 18789
-# 030
+# 033-multi-provider-support

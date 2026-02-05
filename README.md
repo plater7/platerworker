@@ -126,6 +126,70 @@ echo "$MOLTBOT_GATEWAY_TOKEN" | npx wrangler secret put MOLTBOT_GATEWAY_TOKEN
 npm run deploy
 ```
 
+### Opcion 5: Usar multiples proveedores simultaneamente
+
+PlaterWorker soporta configurar **multiples proveedores de IA al mismo tiempo**. Puedes tener Nvidia, OpenRouter, Anthropic y OpenAI configurados simultaneamente y cambiar entre ellos usando el prefijo del modelo:
+
+```bash
+# Configurar multiples API keys
+npx wrangler secret put NVIDIA_API_KEY       # Para modelos Nvidia NIM
+npx wrangler secret put OPENROUTER_API_KEY   # Para modelos OpenRouter
+npx wrangler secret put ANTHROPIC_API_KEY    # Para modelos Anthropic (opcional)
+npx wrangler secret put OPENAI_API_KEY       # Para modelos OpenAI (opcional)
+
+# Generar token de gateway
+export MOLTBOT_GATEWAY_TOKEN=$(openssl rand -hex 32)
+echo "Token del gateway: $MOLTBOT_GATEWAY_TOKEN"
+echo "$MOLTBOT_GATEWAY_TOKEN" | npx wrangler secret put MOLTBOT_GATEWAY_TOKEN
+
+# Desplegar
+npm run deploy
+```
+
+#### Cambiar entre proveedores en el chat
+
+Una vez configurados multiples proveedores, puedes cambiar entre ellos usando prefijos:
+
+```bash
+# Usar Nvidia
+/nvidia/kimi Analiza este documento largo
+
+# Usar OpenRouter
+/openrouter/qwen Optimiza este codigo
+
+# Usar Anthropic
+/anthropic/claude-opus-4-5 Tarea compleja de razonamiento
+
+# Usar OpenAI
+/openai/gpt-4o Respuesta general
+```
+
+#### Prioridad del modelo primario
+
+El **modelo primario** (el que se usa por defecto sin prefijo) se determina en este orden:
+
+1. **OpenAI** - Si esta configurado (gpt-5.2)
+2. **OpenRouter** - Si esta configurado (openrouter/free)
+3. **Nvidia** - Si esta configurado (nvidia/moonshotai/kimi-k2.5)
+4. **Anthropic** - Si esta configurado (claude-opus-4-5)
+5. **Fallback** - OpenRouter free (sin API key)
+
+#### Verificar proveedores configurados
+
+Despues del despliegue, revisa los logs para ver que proveedores estan activos:
+
+```bash
+npx wrangler tail
+
+# Deberias ver:
+# Configuring AI providers...
+# Configuring OpenRouter provider...
+# Configuring Nvidia provider...
+# Provider configuration complete.
+# Primary model: openrouter/free
+# Available providers: openrouter, nvidia
+```
+
 Después de desplegar, abre el Control UI con tu token:
 
 ```
@@ -366,6 +430,17 @@ La mayoría de la funcionalidad es idéntica a moltworker original. Consulta la 
 2. Verificar secretos: `npx wrangler secret list`
 3. Limpiar cache de build: Editar comentario `# Build cache bust` en Dockerfile
 4. Redesplegar: `npm run deploy`
+
+### Solo se configura un proveedor aunque tengo multiples API keys
+- Verifica que todas las API keys esten configuradas correctamente con `npx wrangler secret list`
+- Revisa los logs con `npx wrangler tail` durante el inicio del contenedor
+- El sistema deberia mostrar "Configuring X provider..." para cada proveedor activo
+- Si solo ves un proveedor, elimina el cache del Dockerfile y redesplega
+
+### No puedo cambiar entre proveedores en el chat
+- Asegurate de usar el prefijo completo: `/nvidia/kimi` no solo `/kimi`
+- Verifica en `/_admin/` que los modelos de ambos proveedores esten listados
+- Los aliases cortos (`/kimi`, `/qwen`) solo funcionan si no hay conflictos entre proveedores
 
 ## 🐛 Reportar problemas
 

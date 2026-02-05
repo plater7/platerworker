@@ -200,9 +200,8 @@ function configureOpenRouterModels() {
     config.agents.defaults.models['openrouter/z-ai/glm-4.7'] = { alias: 'glm-4.7' };
     config.agents.defaults.models['openrouter/z-ai/glm-4.5-air:free'] = { alias: 'glmfree' };
 
-    // Primary
-    config.agents.defaults.model.primary = 'openrouter/free';
 }
+
 
 // Helper function to configure Nvidia NIM models
 function configureNvidiaModels() {
@@ -237,8 +236,6 @@ function configureNvidiaModels() {
     // DeepSeek
     config.agents.defaults.models['nvidia/deepseek-ai/deepseek-r1'] = { alias: 'deepseek-r1' };
 
-    // Primary model - Kimi 2.5
-    config.agents.defaults.model.primary = 'nvidia/moonshotai/kimi-k2.5';
 }
 
 // Clean up any broken anthropic provider config from previous runs
@@ -322,55 +319,129 @@ if (process.env.SLACK_BOT_TOKEN && process.env.SLACK_APP_TOKEN) {
     config.channels.slack.enabled = true;
 }
 
-// Base URL override (e.g., for Cloudflare AI Gateway)
-// Usage: Set AI_GATEWAY_BASE_URL or ANTHROPIC_BASE_URL to your endpoint like:
-//   https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/anthropic
-//   https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/openai
-const baseUrl = (process.env.AI_GATEWAY_BASE_URL || process.env.ANTHROPIC_BASE_URL || '').replace(/\/+$/, '');
-const isOpenAI = baseUrl.endsWith('/openai');
-const isOpenRouter = baseUrl.endsWith('openrouter.ai/api/v1');
-const isNvidia = baseUrl.includes('api.nvidia.com') || baseUrl.includes('integrate.api.nvidia.com');
+// ============================================================
+// MULTI-PROVIDER CONFIGURATION
+// ============================================================
+// Configure all available providers independently.
+// This allows switching between providers using model prefixes:
+// - /openrouter/qwen
+// - /nvidia/kimi
+// - /anthropic/claude-opus-4-5
+// ============================================================
 
-if (isOpenAI) {
-    // Create custom openai provider config with baseUrl override
-    // Omit apiKey so moltbot falls back to OPENAI_API_KEY env var
-    console.log('Configuring OpenAI provider with base URL:', baseUrl);
-    config.models = config.models || {};
-    config.models.providers = config.models.providers || {};
+console.log('Configuring AI providers...');
+
+// Initialize models object
+config.models = config.models || {};
+config.models.providers = config.models.providers || {};
+config.agents.defaults.models = config.agents.defaults.models || {};
+
+let primaryModelSet = false;
+
+// Detect base URL type from AI_GATEWAY_BASE_URL or ANTHROPIC_BASE_URL
+const baseUrl = (process.env.AI_GATEWAY_BASE_URL || process.env.ANTHROPIC_BASE_URL || '').replace(/\/+$/, '');
+const isOpenAIGateway = baseUrl.endsWith('/openai');
+const isOpenRouterGateway = baseUrl.endsWith('openrouter.ai/api/v1');
+const isNvidiaGateway = baseUrl.includes('api.nvidia.com') || baseUrl.includes('integrate.api.nvidia.com');
+const isAnthropicGateway = baseUrl && !isOpenAIGateway && !isOpenRouterGateway && !isNvidiaGateway;
+
+// ============================================================
+// OPENAI PROVIDER
+// ============================================================
+if (isOpenAIGateway || process.env.OPENAI_API_KEY) {
+    console.log('Configuring OpenAI provider...');
+    const openaiBaseUrl = isOpenAIGateway ? baseUrl : undefined;
+
     config.models.providers.openai = {
-        baseUrl: baseUrl,
         api: 'openai-responses',
         models: [
             { id: 'gpt-5.2', name: 'GPT-5.2', contextWindow: 200000 },
             { id: 'gpt-5', name: 'GPT-5', contextWindow: 200000 },
             { id: 'gpt-4.5-preview', name: 'GPT-4.5 Preview', contextWindow: 128000 },
+            { id: 'gpt-4o', name: 'GPT-4o', contextWindow: 128000 },
         ]
     };
-    // Add models to the allowlist so they appear in /models
-    config.agents.defaults.models = config.agents.defaults.models || {};
+
+    if (openaiBaseUrl) {
+        config.models.providers.openai.baseUrl = openaiBaseUrl;
+        console.log('  - Using OpenAI via AI Gateway:', openaiBaseUrl);
+    } else {
+        console.log('  - Using OpenAI with default endpoint');
+    }
+
+    // Add model aliases
     config.agents.defaults.models['openai/gpt-5.2'] = { alias: 'GPT-5.2' };
     config.agents.defaults.models['openai/gpt-5'] = { alias: 'GPT-5' };
     config.agents.defaults.models['openai/gpt-4.5-preview'] = { alias: 'GPT-4.5' };
-    config.agents.defaults.model.primary = 'openai/gpt-5.2';
-} else if (isOpenRouter) {
+    config.agents.defaults.models['openai/gpt-4o'] = { alias: 'GPT-4o' };
+
+    // Set as primary if not already set
+    if (!primaryModelSet) {
+        config.agents.defaults.model.primary = 'openai/gpt-5.2';
+        primaryModelSet = true;
+        console.log('  - Set as primary model: openai/gpt-5.2');
+    }
+}
+
+// ============================================================
+// OPENROUTER PROVIDER
+// ============================================================
+if (isOpenRouterGateway || process.env.OPENROUTER_API_KEY) {
+    console.log('Configuring OpenRouter provider...');
+
+    // OpenRouter uses built-in support, so we just configure models
     configureOpenRouterModels();
-} else if (isNvidia) {
-    // Configure Nvidia NIM models
-    console.log('Configuring Nvidia API with custom base URL:', baseUrl);
-    config.models = config.models || {};
-    config.models.providers = config.models.providers || {};
+
+    if (isOpenRouterGateway) {
+        console.log('  - Using OpenRouter via AI Gateway:', baseUrl);
+    } else {
+        console.log('  - Using OpenRouter with default endpoint');
+    }
+
+    // Set as primary if not already set
+    if (!primaryModelSet) {
+        config.agents.defaults.model.primary = 'openrouter/free';
+        primaryModelSet = true;
+        console.log('  - Set as primary model: openrouter/free');
+    }
+}
+
+// ============================================================
+// NVIDIA PROVIDER
+// ============================================================
+if (isNvidiaGateway || process.env.NVIDIA_API_KEY) {
+    console.log('Configuring Nvidia provider...');
+
+    const nvidiaBaseUrl = isNvidiaGateway ? baseUrl : 'https://integrate.api.nvidia.com/v1';
+    const nvidiaApiKey = process.env.NVIDIA_API_KEY || process.env.AI_GATEWAY_API_KEY || '';
+
     config.models.providers.nvidia = {
-        baseUrl: baseUrl,
-        apiKey: process.env.NVIDIA_API_KEY || process.env.AI_GATEWAY_API_KEY || ''
+        baseUrl: nvidiaBaseUrl,
+        apiKey: nvidiaApiKey
     };
 
+    console.log('  - Using Nvidia endpoint:', nvidiaBaseUrl);
+
+    // Configure Nvidia models
     configureNvidiaModels();
-} else if (baseUrl) {
-    console.log('Configuring Anthropic provider with base URL:', baseUrl);
-    config.models = config.models || {};
-    config.models.providers = config.models.providers || {};
+
+    // Set as primary if not already set
+    if (!primaryModelSet) {
+        config.agents.defaults.model.primary = 'nvidia/moonshotai/kimi-k2.5';
+        primaryModelSet = true;
+        console.log('  - Set as primary model: nvidia/moonshotai/kimi-k2.5');
+    }
+}
+
+// ============================================================
+// ANTHROPIC PROVIDER
+// ============================================================
+if (isAnthropicGateway || process.env.ANTHROPIC_API_KEY) {
+    console.log('Configuring Anthropic provider...');
+
+    const anthropicBaseUrl = isAnthropicGateway ? baseUrl : undefined;
+
     const providerConfig = {
-        baseUrl: baseUrl,
         api: 'anthropic-messages',
         models: [
             { id: 'claude-opus-4-5-20251101', name: 'Claude Opus 4.5', contextWindow: 200000 },
@@ -378,34 +449,74 @@ if (isOpenAI) {
             { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', contextWindow: 200000 },
         ]
     };
-    // Include API key in provider config if set (required when using custom baseUrl)
+
+    if (anthropicBaseUrl) {
+        providerConfig.baseUrl = anthropicBaseUrl;
+        console.log('  - Using Anthropic via AI Gateway:', anthropicBaseUrl);
+    } else {
+        console.log('  - Using Anthropic with default endpoint');
+    }
+
+    // Include API key in provider config if set
     if (process.env.ANTHROPIC_API_KEY) {
         providerConfig.apiKey = process.env.ANTHROPIC_API_KEY;
     }
+
     config.models.providers.anthropic = providerConfig;
-    // Add models to the allowlist so they appear in /models
-    config.agents.defaults.models = config.agents.defaults.models || {};
+
+    // Add model aliases
     config.agents.defaults.models['anthropic/claude-opus-4-5-20251101'] = { alias: 'Opus 4.5' };
     config.agents.defaults.models['anthropic/claude-sonnet-4-5-20250929'] = { alias: 'Sonnet 4.5' };
     config.agents.defaults.models['anthropic/claude-haiku-4-5-20251001'] = { alias: 'Haiku 4.5' };
-    config.agents.defaults.model.primary = 'anthropic/claude-opus-4-5-20251101';
-} else {
-    // Check if NVIDIA_API_KEY is set
-    if (process.env.NVIDIA_API_KEY) {
-        console.log('Configuring Nvidia API with default endpoint');
-        config.models = config.models || {};
-        config.models.providers = config.models.providers || {};
-        config.models.providers.nvidia = {
-            baseUrl: 'https://integrate.api.nvidia.com/v1',
-            apiKey: process.env.NVIDIA_API_KEY
-        };
 
-        configureNvidiaModels();
-    } else {
-        // Default to OpenRouter Auto for intelligent routing
-        configureOpenRouterModels();
+    // Set as primary if not already set
+    if (!primaryModelSet) {
+        config.agents.defaults.model.primary = 'anthropic/claude-opus-4-5-20251101';
+        primaryModelSet = true;
+        console.log('  - Set as primary model: anthropic/claude-opus-4-5-20251101');
     }
 }
+
+// ============================================================
+// FALLBACK: If no provider configured, use OpenRouter
+// ============================================================
+if (!primaryModelSet) {
+    console.log('No API keys configured, defaulting to OpenRouter...');
+    configureOpenRouterModels();
+    config.agents.defaults.model.primary = 'openrouter/free';
+    console.log('  - Set as primary model: openrouter/free');
+}
+
+// Log detailed provider summary
+console.log('');
+console.log('='.repeat(60));
+console.log('PROVIDER CONFIGURATION SUMMARY');
+console.log('='.repeat(60));
+console.log('Primary model:', config.agents.defaults.model.primary);
+console.log('');
+
+const providers = Object.keys(config.models.providers || {});
+if (providers.length > 0) {
+    console.log('Configured providers (' + providers.length + '):');
+    providers.forEach(p => {
+        console.log('  - ' + p);
+        const providerConfig = config.models.providers[p];
+        if (providerConfig.baseUrl) {
+            console.log('    baseUrl: ' + providerConfig.baseUrl);
+        }
+        if (providerConfig.models) {
+            console.log('    models: ' + providerConfig.models.length);
+        }
+    });
+} else {
+    console.log('No providers configured (using built-in OpenRouter)');
+}
+
+console.log('');
+const modelCount = Object.keys(config.agents.defaults.models || {}).length;
+console.log('Total models available: ' + modelCount);
+console.log('='.repeat(60));
+console.log('');
 
 // Write updated config
 fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
@@ -434,4 +545,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 028
+# 033-multi-provider-support
