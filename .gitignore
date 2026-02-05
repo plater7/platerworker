@@ -31,11 +31,21 @@ Thumbs.db
 .env.*
 !.env.example
 
+# API Keys and secrets
+*.key
+nvapi-*.txt
+
+# Test outputs
+scripts/test-output.json
+
 # TypeScript
 *.tsbuildinfo
 
 # Docker build artifacts
 *.tar
+
+# Profiling files
+*.cpuprofile
 
 # Veta agent memory
 .veta/
@@ -58,3 +68,7 @@ test/e2e/.dev.vars
 
 # Temporary e2e wrangler configs
 .wrangler-e2e-*.jsonc
+
+# Claude
+.claude/
+.claude/*

@@ -1,420 +1,492 @@
-# OpenClaw on Cloudflare Workers
+# PlaterWorker - OpenClaw con soporte OpenRouter
 
-Run [OpenClaw](https://github.com/openclaw/openclaw) (formerly Moltbot, formerly Clawdbot) personal AI assistant in a [Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/).
+PlaterWorker es un fork de [moltworker](https://github.com/cloudflare/moltworker) que añade soporte nativo para [OpenRouter](https://openrouter.ai) como proveedor de modelos AI. Permite ejecutar [OpenClaw](https://github.com/openclaw/openclaw) (anteriormente Moltbot/Clawdbot) en [Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) con acceso a múltiples modelos de IA a través de OpenRouter.
 
-![moltworker architecture](./assets/logo.png)
+![PlaterWorker](./assets/logo.png)
 
-> **Experimental:** This is a proof of concept demonstrating that OpenClaw can run in Cloudflare Sandbox. It is not officially supported and may break without notice. Use at your own risk.
+> **⚠️ ADVERTENCIA IMPORTANTE**: Las modificaciones para soportar OpenRouter fueron realizadas principalmente mediante IA y pueden contener errores. Este proyecto es experimental y debe usarse con precaución. Se recomienda revisar el código antes de usar en producción.
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/moltworker)
+> **Experimental:** Este es un concepto de prueba que demuestra que OpenClaw puede correr en Cloudflare Sandbox. No está oficialmente soportado y puede dejar de funcionar sin previo aviso. Úselo bajo su propio riesgo.
 
-## Requirements
+## ⭐ Cambios principales respecto a moltworker
 
-- [Workers Paid plan](https://www.cloudflare.com/plans/developer-platform/) ($5 USD/month) — required for Cloudflare Sandbox containers
-- [Anthropic API key](https://console.anthropic.com/) — for Claude access, or you can use AI Gateway's [Unified Billing](https://developers.cloudflare.com/ai-gateway/features/unified-billing/)
+### Soporte OpenRouter
+- **Configuración simplificada**: OpenRouter se configura automáticamente como proveedor por defecto
+- **Múltiples modelos disponibles**: Acceso a modelos de Anthropic, OpenAI, DeepSeek, Qwen, Google, X.AI y más
+- **Auto-routing inteligente**: Usa `openrouter/auto` o `openrouter/free` para routing automático
+- **Aliases cortos**: Comandos simples como `/qwen`, `/deep`, `/haiku`, `/grok`
 
-The following Cloudflare features used by this project have free tiers:
-- Cloudflare Access (authentication)
-- Browser Rendering (for browser navigation)
-- AI Gateway (optional, for API routing/analytics)
-- R2 Storage (optional, for persistence)
+### Modelos preconfigurados
+- **Auto-routing**: `auto`, `free`
+- **Código**: `qwen`, `qwenfree`, `devstral`, `mimofree`, `grokcode`
+- **General**: `deep`, `kimi`, `flash`
+- **Claude**: `haiku`, `sonnet`
+- **OpenAI**: `mini`, `gpt`
+- **Razonamiento**: `think`, `qwq`
+- **GLM**: `glm-4.7`, `glmfree`
 
-## What is OpenClaw?
+### Workspace modificado
+- Workspace movido a `/root/.clawdbot/workspace` para mejor organización
+- Backup completo a R2 incluye workspace y configuraciones
 
-[OpenClaw](https://github.com/openclaw/openclaw) (formerly Moltbot, formerly Clawdbot) is a personal AI assistant with a gateway architecture that connects to multiple chat platforms. Key features:
+## 📋 Requisitos
 
-- **Control UI** - Web-based chat interface at the gateway
-- **Multi-channel support** - Telegram, Discord, Slack
-- **Device pairing** - Secure DM authentication requiring explicit approval
-- **Persistent conversations** - Chat history and context across sessions
-- **Agent runtime** - Extensible AI capabilities with workspace and skills
+- [Workers Paid plan](https://www.cloudflare.com/plans/developer-platform/) ($5 USD/mes) — requerido para Cloudflare Sandbox
+- [Cuenta OpenRouter](https://openrouter.ai/) — para acceso a modelos IA
+- O [Anthropic API key](https://console.anthropic.com/) — como alternativa
 
-This project packages OpenClaw to run in a [Cloudflare Sandbox](https://developers.cloudflare.com/sandbox/) container, providing a fully managed, always-on deployment without needing to self-host. Optional R2 storage enables persistence across container restarts.
+Las siguientes funcionalidades de Cloudflare tienen tiers gratuitos:
+- Cloudflare Access (autenticación)
+- Browser Rendering (navegación en navegador)
+- AI Gateway (opcional, para routing/analytics)
+- R2 Storage (opcional, para persistencia)
 
-## Architecture
+## 🚀 Instalación rápida
 
-![moltworker architecture](./assets/architecture.png)
-
-## Quick Start
-
-_Cloudflare Sandboxes are available on the [Workers Paid plan](https://dash.cloudflare.com/?to=/:account/workers/plans)._
+### Opción 1: Usar OpenRouter (Recomendado)
 
 ```bash
-# Install dependencies
+# Instalar dependencias
 npm install
 
-# Set your API key (direct Anthropic access)
-npx wrangler secret put ANTHROPIC_API_KEY
+# Configurar OpenRouter API Key
+npx wrangler secret put OPENROUTER_API_KEY
 
-# Or use AI Gateway instead (see "Optional: Cloudflare AI Gateway" below)
-# npx wrangler secret put AI_GATEWAY_API_KEY
-# npx wrangler secret put AI_GATEWAY_BASE_URL
+# Configurar base URL para OpenRouter
+npx wrangler secret put AI_GATEWAY_BASE_URL
+# Ingresar: https://openrouter.ai/api/v1
 
-# Generate and set a gateway token (required for remote access)
-# Save this token - you'll need it to access the Control UI
+# Generar token de gateway
 export MOLTBOT_GATEWAY_TOKEN=$(openssl rand -hex 32)
-echo "Your gateway token: $MOLTBOT_GATEWAY_TOKEN"
+echo "Token del gateway: $MOLTBOT_GATEWAY_TOKEN"
 echo "$MOLTBOT_GATEWAY_TOKEN" | npx wrangler secret put MOLTBOT_GATEWAY_TOKEN
 
-# Deploy
+# Desplegar
 npm run deploy
 ```
 
-After deploying, open the Control UI with your token:
+### Opción 2: Usar Anthropic API directa
+
+```bash
+# Instalar dependencias
+npm install
+
+# Configurar Anthropic API Key
+npx wrangler secret put ANTHROPIC_API_KEY
+
+# Generar token de gateway
+export MOLTBOT_GATEWAY_TOKEN=$(openssl rand -hex 32)
+echo "Token del gateway: $MOLTBOT_GATEWAY_TOKEN"
+echo "$MOLTBOT_GATEWAY_TOKEN" | npx wrangler secret put MOLTBOT_GATEWAY_TOKEN
+
+# Desplegar
+npm run deploy
+```
+
+### Opción 3: Usar Nvidia API (Kimi 2.5 y NIM models)
+
+```bash
+# Instalar dependencias
+npm install
+
+# Configurar Nvidia API Key (obtener en https://build.nvidia.com)
+npx wrangler secret put NVIDIA_API_KEY
+
+# Opcional: Configurar base URL personalizada
+npx wrangler secret put AI_GATEWAY_BASE_URL
+# Ingresar: https://integrate.api.nvidia.com/v1
+
+# Generar token de gateway
+export MOLTBOT_GATEWAY_TOKEN=$(openssl rand -hex 32)
+echo "Token del gateway: $MOLTBOT_GATEWAY_TOKEN"
+echo "$MOLTBOT_GATEWAY_TOKEN" | npx wrangler secret put MOLTBOT_GATEWAY_TOKEN
+
+# Desplegar
+npm run deploy
+```
+
+### Opción 4: Usar AI Gateway de Cloudflare
+
+```bash
+# Instalar dependencias
+npm install
+
+# Configurar AI Gateway
+npx wrangler secret put AI_GATEWAY_API_KEY
+npx wrangler secret put AI_GATEWAY_BASE_URL
+# Ingresar: https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/anthropic
+# O para OpenRouter: https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/openrouter
+
+# Generar token de gateway
+export MOLTBOT_GATEWAY_TOKEN=$(openssl rand -hex 32)
+echo "Token del gateway: $MOLTBOT_GATEWAY_TOKEN"
+echo "$MOLTBOT_GATEWAY_TOKEN" | npx wrangler secret put MOLTBOT_GATEWAY_TOKEN
+
+# Desplegar
+npm run deploy
+```
+
+### Opcion 5: Usar multiples proveedores simultaneamente
+
+PlaterWorker soporta configurar **multiples proveedores de IA al mismo tiempo**. Puedes tener Nvidia, OpenRouter, Anthropic y OpenAI configurados simultaneamente y cambiar entre ellos usando el prefijo del modelo:
+
+```bash
+# Configurar multiples API keys
+npx wrangler secret put NVIDIA_API_KEY       # Para modelos Nvidia NIM
+npx wrangler secret put OPENROUTER_API_KEY   # Para modelos OpenRouter
+npx wrangler secret put ANTHROPIC_API_KEY    # Para modelos Anthropic (opcional)
+npx wrangler secret put OPENAI_API_KEY       # Para modelos OpenAI (opcional)
+
+# Generar token de gateway
+export MOLTBOT_GATEWAY_TOKEN=$(openssl rand -hex 32)
+echo "Token del gateway: $MOLTBOT_GATEWAY_TOKEN"
+echo "$MOLTBOT_GATEWAY_TOKEN" | npx wrangler secret put MOLTBOT_GATEWAY_TOKEN
+
+# Desplegar
+npm run deploy
+```
+
+#### Cambiar entre proveedores en el chat
+
+Una vez configurados multiples proveedores, puedes cambiar entre ellos usando prefijos:
+
+```bash
+# Usar Nvidia
+/nvidia/kimi Analiza este documento largo
+
+# Usar OpenRouter
+/openrouter/qwen Optimiza este codigo
+
+# Usar Anthropic
+/anthropic/claude-opus-4-5 Tarea compleja de razonamiento
+
+# Usar OpenAI
+/openai/gpt-4o Respuesta general
+```
+
+#### Prioridad del modelo primario
+
+El **modelo primario** (el que se usa por defecto sin prefijo) se determina en este orden:
+
+1. **OpenAI** - Si esta configurado (gpt-5.2)
+2. **OpenRouter** - Si esta configurado (openrouter/free)
+3. **Nvidia** - Si esta configurado (nvidia/moonshotai/kimi-k2.5)
+4. **Anthropic** - Si esta configurado (claude-opus-4-5)
+5. **Fallback** - OpenRouter free (sin API key)
+
+#### Verificar proveedores configurados
+
+Despues del despliegue, revisa los logs para ver que proveedores estan activos:
+
+```bash
+npx wrangler tail
+
+# Deberias ver:
+# Configuring AI providers...
+# Configuring OpenRouter provider...
+# Configuring Nvidia provider...
+# Provider configuration complete.
+# Primary model: openrouter/free
+# Available providers: openrouter, nvidia
+```
+
+Después de desplegar, abre el Control UI con tu token:
 
 ```
 https://your-worker.workers.dev/?token=YOUR_GATEWAY_TOKEN
 ```
 
-Replace `your-worker` with your actual worker subdomain and `YOUR_GATEWAY_TOKEN` with the token you generated above.
+Reemplaza `your-worker` con tu subdominio de worker y `YOUR_GATEWAY_TOKEN` con el token que generaste.
 
-**Note:** The first request may take 1-2 minutes while the container starts.
+**Nota:** La primera petición puede tomar 1-2 minutos mientras el contenedor se inicia.
 
-> **Important:** You will not be able to use the Control UI until you complete the following steps. You MUST:
-> 1. [Set up Cloudflare Access](#setting-up-the-admin-ui) to protect the admin UI
-> 2. [Pair your device](#device-pairing) via the admin UI at `/_admin/`
+## 🔐 Configuración de seguridad
 
-You'll also likely want to [enable R2 storage](#persistent-storage-r2) so your paired devices and conversation history persist across container restarts (optional but recommended).
+> **Importante:** No podrás usar el Control UI hasta completar estos pasos:
+> 1. [Configurar Cloudflare Access](#configurar-cloudflare-access) para proteger el admin UI
+> 2. [Emparejar tu dispositivo](#emparejamiento-de-dispositivos) vía admin UI en `/_admin/`
 
-## Setting Up the Admin UI
+También se recomienda [habilitar almacenamiento R2](#almacenamiento-persistente-r2) para que los dispositivos emparejados y el historial persistan entre reinicios del contenedor.
 
-To use the admin UI at `/_admin/` for device management, you need to:
-1. Enable Cloudflare Access on your worker
-2. Set the Access secrets so the worker can validate JWTs
+### Configurar Cloudflare Access
 
-### 1. Enable Cloudflare Access on workers.dev
+Ver sección completa en la [documentación original de moltworker](https://github.com/cloudflare/moltworker#setting-up-the-admin-ui).
 
-The easiest way to protect your worker is using the built-in Cloudflare Access integration for workers.dev:
-
-1. Go to the [Workers & Pages dashboard](https://dash.cloudflare.com/?to=/:account/workers-and-pages)
-2. Select your Worker (e.g., `moltbot-sandbox`)
-3. In **Settings**, under **Domains & Routes**, in the `workers.dev` row, click the meatballs menu (`...`)
-4. Click **Enable Cloudflare Access**
-5. Click **Manage Cloudflare Access** to configure who can access:
-   - Add your email address to the allow list
-   - Or configure other identity providers (Google, GitHub, etc.)
-6. Copy the **Application Audience (AUD)** tag from the Access application settings. This will be your `CF_ACCESS_AUD` in Step 2 below
-
-### 2. Set Access Secrets
-
-After enabling Cloudflare Access, set the secrets so the worker can validate JWTs:
-
+Resumen:
+1. Habilitar Cloudflare Access en tu worker
+2. Configurar dominio y audiencia (AUD)
+3. Establecer secretos:
 ```bash
-# Your Cloudflare Access team domain (e.g., "myteam.cloudflareaccess.com")
 npx wrangler secret put CF_ACCESS_TEAM_DOMAIN
-
-# The Application Audience (AUD) tag from your Access application that you copied in the step above
 npx wrangler secret put CF_ACCESS_AUD
 ```
+4. Redesplegar
 
-You can find your team domain in the [Zero Trust Dashboard](https://one.dash.cloudflare.com/) under **Settings** > **Custom Pages** (it's the subdomain before `.cloudflareaccess.com`).
+### Emparejamiento de dispositivos
 
-### 3. Redeploy
+Por defecto, cada nuevo dispositivo debe ser aprobado en `/_admin/` antes de poder usar el asistente. Esto aplica para:
+- Navegadores web
+- CLI clients
+- Bots de Telegram/Discord/Slack (DMs)
 
-```bash
-npm run deploy
-```
+## 💾 Almacenamiento persistente (R2)
 
-Now visit `/_admin/` and you'll be prompted to authenticate via Cloudflare Access before accessing the admin UI.
+Por defecto, los datos de moltbot (configs, dispositivos emparejados, historial de conversaciones) se pierden cuando el contenedor se reinicia. Para habilitar persistencia:
 
-### Alternative: Manual Access Application
+### 1. Crear token de API R2
 
-If you prefer more control, you can manually create an Access application:
+1. Ir a **R2** > **Overview** en el [Dashboard de Cloudflare](https://dash.cloudflare.com/)
+2. Click en **Manage R2 API Tokens**
+3. Crear nuevo token con permisos **Object Read & Write**
+4. Seleccionar el bucket `moltbot-data` (se crea automáticamente)
+5. Copiar **Access Key ID** y **Secret Access Key**
 
-1. Go to [Cloudflare Zero Trust Dashboard](https://one.dash.cloudflare.com/)
-2. Navigate to **Access** > **Applications**
-3. Create a new **Self-hosted** application
-4. Set the application domain to your Worker URL (e.g., `moltbot-sandbox.your-subdomain.workers.dev`)
-5. Add paths to protect: `/_admin/*`, `/api/*`, `/debug/*`
-6. Configure your desired identity providers (e.g., email OTP, Google, GitHub)
-7. Copy the **Application Audience (AUD)** tag and set the secrets as shown above
-
-### Local Development
-
-For local development, create a `.dev.vars` file with:
+### 2. Configurar secretos
 
 ```bash
-DEV_MODE=true               # Skip Cloudflare Access auth + bypass device pairing
-DEBUG_ROUTES=true           # Enable /debug/* routes (optional)
-```
-
-## Authentication
-
-By default, moltbot uses **device pairing** for authentication. When a new device (browser, CLI, etc.) connects, it must be approved via the admin UI at `/_admin/`.
-
-### Device Pairing
-
-1. A device connects to the gateway
-2. The connection is held pending until approved
-3. An admin approves the device via `/_admin/`
-4. The device is now paired and can connect freely
-
-This is the most secure option as it requires explicit approval for each device.
-
-### Gateway Token (Required)
-
-A gateway token is required to access the Control UI when hosted remotely. Pass it as a query parameter:
-
-```
-https://your-worker.workers.dev/?token=YOUR_TOKEN
-wss://your-worker.workers.dev/ws?token=YOUR_TOKEN
-```
-
-**Note:** Even with a valid token, new devices still require approval via the admin UI at `/_admin/` (see Device Pairing above).
-
-For local development only, set `DEV_MODE=true` in `.dev.vars` to skip Cloudflare Access authentication and enable `allowInsecureAuth` (bypasses device pairing entirely).
-
-## Persistent Storage (R2)
-
-By default, moltbot data (configs, paired devices, conversation history) is lost when the container restarts. To enable persistent storage across sessions, configure R2:
-
-### 1. Create R2 API Token
-
-1. Go to **R2** > **Overview** in the [Cloudflare Dashboard](https://dash.cloudflare.com/)
-2. Click **Manage R2 API Tokens**
-3. Create a new token with **Object Read & Write** permissions
-4. Select the `moltbot-data` bucket (created automatically on first deploy)
-5. Copy the **Access Key ID** and **Secret Access Key**
-
-### 2. Set Secrets
-
-```bash
-# R2 Access Key ID
 npx wrangler secret put R2_ACCESS_KEY_ID
-
-# R2 Secret Access Key
 npx wrangler secret put R2_SECRET_ACCESS_KEY
-
-# Your Cloudflare Account ID
 npx wrangler secret put CF_ACCOUNT_ID
 ```
 
-To find your Account ID: Go to the [Cloudflare Dashboard](https://dash.cloudflare.com/), click the three dots menu next to your account name, and select "Copy Account ID".
+### Cómo funciona
 
-### How It Works
+El almacenamiento R2 usa un enfoque de backup/restore:
 
-R2 storage uses a backup/restore approach for simplicity:
+**Al iniciar el contenedor:**
+- Si R2 está montado y contiene datos de backup, se restaura a `/root/.clawdbot`
+- Incluye workspace completo en `/root/.clawdbot/workspace`
 
-**On container startup:**
-- If R2 is mounted and contains backup data, it's restored to the moltbot config directory
-- OpenClaw uses its default paths (no special configuration needed)
+**Durante operación:**
+- Un cron job corre cada 5 minutos para sincronizar a R2
+- También puedes hacer backup manual desde el admin UI
 
-**During operation:**
-- A cron job runs every 5 minutes to sync the moltbot config to R2
-- You can also trigger a manual backup from the admin UI at `/_admin/`
+**En el admin UI:**
+- Verás "Last backup: [timestamp]"
+- Click en "Backup Now" para sincronización inmediata
 
-**In the admin UI:**
-- When R2 is configured, you'll see "Last backup: [timestamp]"
-- Click "Backup Now" to trigger an immediate sync
+## 🎮 Usar modelos de OpenRouter
 
-Without R2 credentials, moltbot still works but uses ephemeral storage (data lost on container restart).
+### Cambiar modelo en el chat
 
-## Container Lifecycle
+Usa comandos con `/` seguido del alias del modelo:
 
-By default, the sandbox container stays alive indefinitely (`SANDBOX_SLEEP_AFTER=never`). This is recommended because cold starts take 1-2 minutes.
-
-To reduce costs for infrequently used deployments, you can configure the container to sleep after a period of inactivity:
-
-```bash
-npx wrangler secret put SANDBOX_SLEEP_AFTER
-# Enter: 10m (or 1h, 30m, etc.)
+```
+/qwen ¿Cómo optimizo este código Python?
+/deep Explica arquitectura de microservicios
+/haiku Responde brevemente
+/think Resuelve este problema complejo (razonamiento)
 ```
 
-When the container sleeps, the next request will trigger a cold start. If you have R2 storage configured, your paired devices and data will persist across restarts.
+### Modelos disponibles
 
-## Admin UI
+| Alias | Modelo | Descripción |
+|-------|--------|-------------|
+| `auto` | openrouter/auto | Auto-routing inteligente |
+| `free` | openrouter/free | Free-routing |
+| `qwen` | qwen-2.5-coder-32b | Especialista en código |
+| `qwenfree` | qwen-2.5-coder-32b:free | Versión gratuita |
+| `deep` | deepseek-chat-v3 | Propósito general |
+| `devstral` | mistralai/devstral-small:free | Código (free) |
+| `grok` | x-ai/grok-4.1-fast | Agentic/Tools |
+| `haiku` | claude-3.5-haiku | Claude rápido |
+| `sonnet` | claude-sonnet-4 | Claude avanzado |
+| `mini` | gpt-4o-mini | OpenAI económico |
+| `gpt` | gpt-4o | OpenAI estándar |
+| `think` | deepseek-reasoner | Razonamiento profundo |
+| `flash` | gemini-2.0-flash | Google rápido |
 
-![admin ui](./assets/adminui.png)
+### Modelos Nvidia NIM disponibles
 
-Access the admin UI at `/_admin/` to:
-- **R2 Storage Status** - Shows if R2 is configured, last backup time, and a "Backup Now" button
-- **Restart Gateway** - Kill and restart the moltbot gateway process
-- **Device Pairing** - View pending requests, approve devices individually or all at once, view paired devices
+Con Nvidia API, tienes acceso a modelos adicionales optimizados:
 
-The admin UI requires Cloudflare Access authentication (or `DEV_MODE=true` for local development).
+| Alias | Modelo | Descripción |
+|-------|--------|-------------|
+| `kimi` | moonshotai/kimi-k2.5 | Kimi 2.5 - Excelente contexto largo |
+| `moonshot8k` | moonshot-v1-8k | Moonshot 8K context |
+| `moonshot32k` | moonshot-v1-32k | Moonshot 32K context |
+| `moonshot128k` | moonshot-v1-128k | Moonshot 128K context |
+| `llama70b` | llama-3.3-70b | Meta Llama 70B |
+| `llama405b` | llama-3.1-405b | Meta Llama 405B |
+| `mistral` | mistral-large-2 | Mistral Large 2 |
+| `mixtral` | mixtral-8x7b | Mixtral MoE |
+| `nemotron` | llama-nemotron-70b | Nvidia Nemotron |
+| `deepseek-r1` | deepseek-r1 | DeepSeek R1 reasoning |
 
-## Debug Endpoints
+**Uso**:
+```
+/kimi Explica este concepto en detalle
+/llama405b Analiza este código complejo
+/deepseek-r1 Resuelve este problema (con razonamiento)
+```
 
-Debug endpoints are available at `/debug/*` when enabled (requires `DEBUG_ROUTES=true` and Cloudflare Access):
+### Configurar modelo por defecto
 
-- `GET /debug/processes` - List all container processes
-- `GET /debug/logs?id=<process_id>` - Get logs for a specific process
-- `GET /debug/version` - Get container and moltbot version info
+El modelo por defecto es `openrouter/free` (free-routing automático). Para cambiarlo:
 
-## Optional: Chat Channels
+1. Editar `moltbot.json.template` antes de desplegar
+2. O modificar `/root/.clawdbot/clawdbot.json` en el contenedor después del primer inicio
+3. O usar variable de entorno `MOLTBOT_DEFAULT_MODEL`
 
-### Telegram
+## 🚀 Nvidia NIM - Configuración avanzada
+
+Nvidia NIM (Nvidia Inference Microservices) proporciona acceso a modelos optimizados de múltiples proveedores, incluyendo Kimi 2.5 de Moonshot AI.
+
+### Obtener API Key
+
+1. Visita [build.nvidia.com](https://build.nvidia.com)
+2. Crea una cuenta o inicia sesión
+3. Navega a la sección de API Keys
+4. Genera una nueva API key
+5. Copia la key (formato: `nvapi-XXXXXXXXXXXX`)
+
+### Configuración básica
 
 ```bash
-npx wrangler secret put TELEGRAM_BOT_TOKEN
+# Configurar API key
+npx wrangler secret put NVIDIA_API_KEY
+# Pegar tu key: nvapi-XXXXXXXXXXXX
+
+# Redesplegar
 npm run deploy
 ```
 
-### Discord
+### Usar con AI Gateway de Cloudflare
+
+Para routing, caching y analytics:
 
 ```bash
-npx wrangler secret put DISCORD_BOT_TOKEN
-npm run deploy
-```
-
-### Slack
-
-```bash
-npx wrangler secret put SLACK_BOT_TOKEN
-npx wrangler secret put SLACK_APP_TOKEN
-npm run deploy
-```
-
-## Optional: Browser Automation (CDP)
-
-This worker includes a Chrome DevTools Protocol (CDP) shim that enables browser automation capabilities. This allows OpenClaw to control a headless browser for tasks like web scraping, screenshots, and automated testing.
-
-### Setup
-
-1. Set a shared secret for authentication:
-
-```bash
-npx wrangler secret put CDP_SECRET
-# Enter a secure random string
-```
-
-2. Set your worker's public URL:
-
-```bash
-npx wrangler secret put WORKER_URL
-# Enter: https://your-worker.workers.dev
-```
-
-3. Redeploy:
-
-```bash
-npm run deploy
-```
-
-### Endpoints
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /cdp/json/version` | Browser version information |
-| `GET /cdp/json/list` | List available browser targets |
-| `GET /cdp/json/new` | Create a new browser target |
-| `WS /cdp/devtools/browser/{id}` | WebSocket connection for CDP commands |
-
-All endpoints require the `CDP_SECRET` header for authentication.
-
-## Built-in Skills
-
-The container includes pre-installed skills in `/root/clawd/skills/`:
-
-### cloudflare-browser
-
-Browser automation via the CDP shim. Requires `CDP_SECRET` and `WORKER_URL` to be set (see [Browser Automation](#optional-browser-automation-cdp) above).
-
-**Scripts:**
-- `screenshot.js` - Capture a screenshot of a URL
-- `video.js` - Create a video from multiple URLs
-- `cdp-client.js` - Reusable CDP client library
-
-**Usage:**
-```bash
-# Screenshot
-node /root/clawd/skills/cloudflare-browser/scripts/screenshot.js https://example.com output.png
-
-# Video from multiple URLs
-node /root/clawd/skills/cloudflare-browser/scripts/video.js "https://site1.com,https://site2.com" output.mp4 --scroll
-```
-
-See `skills/cloudflare-browser/SKILL.md` for full documentation.
-
-## Optional: Cloudflare AI Gateway
-
-You can route API requests through [Cloudflare AI Gateway](https://developers.cloudflare.com/ai-gateway/) for caching, rate limiting, analytics, and cost tracking. AI Gateway supports multiple providers — configure your preferred provider in the gateway and use these env vars:
-
-### Setup
-
-1. Create an AI Gateway in the [AI Gateway section](https://dash.cloudflare.com/?to=/:account/ai/ai-gateway/create-gateway) of the Cloudflare Dashboard.
-2. Add a provider (e.g., Anthropic) to your gateway
-3. Set the gateway secrets:
-
-You'll find the base URL on the Overview tab of your newly created gateway. At the bottom of the page, expand the **Native API/SDK Examples** section and select "Anthropic".
-
-```bash
-# Your provider's API key (e.g., Anthropic API key)
-npx wrangler secret put AI_GATEWAY_API_KEY
-
-# Your AI Gateway endpoint URL
+# Configurar ambas variables
+npx wrangler secret put NVIDIA_API_KEY
 npx wrangler secret put AI_GATEWAY_BASE_URL
-# Enter: https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/anthropic
+# Ingresar: https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/nvidia
 ```
 
-4. Redeploy:
+### Características especiales de Kimi 2.5
 
+El modelo Kimi 2.5 soporta el parámetro `thinking` para razonamiento explícito:
+
+```javascript
+// En el código, esto se configura automáticamente
+{
+  "chat_template_kwargs": {"thinking": true}
+}
+```
+
+Para usar thinking mode en el chat:
+```
+/kimi --think Analiza este problema paso a paso
+```
+
+### Modelos recomendados según uso
+
+- **Contexto largo**: `/kimi`, `/moonshot128k` - Hasta 128K tokens
+- **Código**: `/nemotron`, `/llama70b` - Optimizados para programación
+- **Razonamiento**: `/deepseek-r1` - Chain-of-thought explícito
+- **General**: `/mistral`, `/llama405b` - Mejor calidad general
+- **Rápido**: `/moonshot8k`, `/mixtral` - Respuestas más rápidas
+
+## 📚 Documentación adicional
+
+La mayoría de la funcionalidad es idéntica a moltworker original. Consulta la [documentación completa de moltworker](https://github.com/cloudflare/moltworker) para:
+
+- Admin UI y gestión de dispositivos
+- Canales de chat (Telegram, Discord, Slack)
+- Browser automation (CDP)
+- Skills personalizados
+- Debug endpoints
+- Cloudflare AI Gateway
+- Troubleshooting
+
+## 🔧 Diferencias técnicas vs moltworker
+
+### Archivos modificados
+- `start-moltbot.sh`: Lógica de configuración de OpenRouter
+- `moltbot.json.template`: Workspace y modelo por defecto
+- `src/types.ts`: Tipo `OPENROUTER_API_KEY`
+- `src/gateway/env.ts`: Propagación de `OPENROUTER_API_KEY`
+- `Dockerfile`: Build cache bust actualizado
+
+### Cambios en configuración
+- Workspace: `/root/clawd` → `/root/.clawdbot/workspace`
+- Modelo por defecto: `anthropic/claude-opus-4-5` → `openrouter/free`
+- Provider por defecto: Anthropic → OpenRouter
+
+## ⚠️ Problemas conocidos
+
+### Nvidia Provider Configuration Bug
+
+PlaterWorker includes an automatic patch for a bug in Clawdbot that prevents custom provider configurations from being properly inherited. This patch is applied automatically on container startup.
+
+**Symptoms without patch:**
+- Nvidia models fail with connection errors
+- Custom provider baseUrl/apiKey not used
+- Error: "Invalid API endpoint" or "Unauthorized"
+
+**Automatic fix:**
+The patch is applied by `scripts/patch-clawdbot-nvidia.sh` during container startup. You'll see:
+```
+🔧 Applying Clawdbot patch for custom providers...
+✅ Clawdbot patched successfully
+```
+
+**Verify patch:**
 ```bash
-npm run deploy
+# Inside container
+/usr/local/bin/test-nvidia-patch.sh
 ```
 
-The `AI_GATEWAY_*` variables take precedence over `ANTHROPIC_*` if both are set.
+**Manual fix (if automatic fails):**
+```bash
+# Inside container
+/usr/local/bin/patch-clawdbot-nvidia.sh
+```
 
-## All Secrets Reference
+**Upstream issue:**
+This bug exists in OpenClaw/Clawdbot's compiled code. See `docs/CLAWDBOT_BUG_REPORT.md` for details. A fix has been proposed to the upstream project.
 
-| Secret | Required | Description |
-|--------|----------|-------------|
-| `AI_GATEWAY_API_KEY` | Yes* | API key for your AI Gateway provider (requires `AI_GATEWAY_BASE_URL`) |
-| `AI_GATEWAY_BASE_URL` | Yes* | AI Gateway endpoint URL (required when using `AI_GATEWAY_API_KEY`) |
-| `ANTHROPIC_API_KEY` | Yes* | Direct Anthropic API key (fallback if AI Gateway not configured) |
-| `ANTHROPIC_BASE_URL` | No | Direct Anthropic API base URL (fallback) |
-| `OPENAI_API_KEY` | No | OpenAI API key (alternative provider) |
-| `CF_ACCESS_TEAM_DOMAIN` | Yes* | Cloudflare Access team domain (required for admin UI) |
-| `CF_ACCESS_AUD` | Yes* | Cloudflare Access application audience (required for admin UI) |
-| `MOLTBOT_GATEWAY_TOKEN` | Yes | Gateway token for authentication (pass via `?token=` query param) |
-| `DEV_MODE` | No | Set to `true` to skip CF Access auth + device pairing (local dev only) |
-| `DEBUG_ROUTES` | No | Set to `true` to enable `/debug/*` routes |
-| `SANDBOX_SLEEP_AFTER` | No | Container sleep timeout: `never` (default) or duration like `10m`, `1h` |
-| `R2_ACCESS_KEY_ID` | No | R2 access key for persistent storage |
-| `R2_SECRET_ACCESS_KEY` | No | R2 secret key for persistent storage |
-| `CF_ACCOUNT_ID` | No | Cloudflare account ID (required for R2 storage) |
-| `TELEGRAM_BOT_TOKEN` | No | Telegram bot token |
-| `TELEGRAM_DM_POLICY` | No | Telegram DM policy: `pairing` (default) or `open` |
-| `DISCORD_BOT_TOKEN` | No | Discord bot token |
-| `DISCORD_DM_POLICY` | No | Discord DM policy: `pairing` (default) or `open` |
-| `SLACK_BOT_TOKEN` | No | Slack bot token |
-| `SLACK_APP_TOKEN` | No | Slack app token |
-| `CDP_SECRET` | No | Shared secret for CDP endpoint authentication (see [Browser Automation](#optional-browser-automation-cdp)) |
-| `WORKER_URL` | No | Public URL of the worker (required for CDP) |
+### Debido a modificaciones por IA
+- La configuración de modelos en `start-moltbot.sh` puede tener redundancias
+- Algunos nombres de modelos pueden quedar desactualizados
+- La lógica de detección de provider puede fallar en casos edge
 
-## Security Considerations
+### Recomendaciones
+1. **Probar en desarrollo primero** con `wrangler dev`
+2. **Revisar logs** con `npx wrangler tail` después de desplegar
+3. **Verificar configuración** en el admin UI después del primer inicio
+4. **Backup manual** desde admin UI antes de hacer cambios grandes
 
-### Authentication Layers
+### Si algo falla
+1. Revisar logs: `npx wrangler tail`
+2. Verificar secretos: `npx wrangler secret list`
+3. Limpiar cache de build: Editar comentario `# Build cache bust` en Dockerfile
+4. Redesplegar: `npm run deploy`
 
-OpenClaw in Cloudflare Sandbox uses multiple authentication layers:
+### Solo se configura un proveedor aunque tengo multiples API keys
+- Verifica que todas las API keys esten configuradas correctamente con `npx wrangler secret list`
+- Revisa los logs con `npx wrangler tail` durante el inicio del contenedor
+- El sistema deberia mostrar "Configuring X provider..." para cada proveedor activo
+- Si solo ves un proveedor, elimina el cache del Dockerfile y redesplega
 
-1. **Cloudflare Access** - Protects admin routes (`/_admin/`, `/api/*`, `/debug/*`). Only authenticated users can manage devices.
+### No puedo cambiar entre proveedores en el chat
+- Asegurate de usar el prefijo completo: `/nvidia/kimi` no solo `/kimi`
+- Verifica en `/_admin/` que los modelos de ambos proveedores esten listados
+- Los aliases cortos (`/kimi`, `/qwen`) solo funcionan si no hay conflictos entre proveedores
 
-2. **Gateway Token** - Required to access the Control UI. Pass via `?token=` query parameter. Keep this secret.
+## 🐛 Reportar problemas
 
-3. **Device Pairing** - Each device (browser, CLI, chat platform DM) must be explicitly approved via the admin UI before it can interact with the assistant. This is the default "pairing" DM policy.
+Este es un proyecto experimental y no oficial. Los problemas deben reportarse en el fork, no en el repositorio original de moltworker.
 
-## Troubleshooting
+## 📄 Licencia
 
-**`npm run dev` fails with an `Unauthorized` error:** You need to enable Cloudflare Containers in the [Containers dashboard](https://dash.cloudflare.com/?to=/:account/workers/containers)
+Este proyecto mantiene la misma licencia que moltworker (MIT). Ver [LICENSE](LICENSE) para detalles.
 
-**Gateway fails to start:** Check `npx wrangler secret list` and `npx wrangler tail`
+## 🙏 Créditos
 
-**Config changes not working:** Edit the `# Build cache bust:` comment in `Dockerfile` and redeploy
+- Proyecto base: [moltworker](https://github.com/cloudflare/moltworker) por Cloudflare
+- OpenClaw: [openclaw/openclaw](https://github.com/openclaw/openclaw)
+- Modificaciones OpenRouter: Realizadas principalmente con asistencia de IA
 
-**Slow first request:** Cold starts take 1-2 minutes. Subsequent requests are faster.
+---
 
-**R2 not mounting:** Check that all three R2 secrets are set (`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `CF_ACCOUNT_ID`). Note: R2 mounting only works in production, not with `wrangler dev`.
-
-**Access denied on admin routes:** Ensure `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD` are set, and that your Cloudflare Access application is configured correctly.
-
-**Devices not appearing in admin UI:** Device list commands take 10-15 seconds due to WebSocket connection overhead. Wait and refresh.
-
-**WebSocket issues in local development:** `wrangler dev` has known limitations with WebSocket proxying through the sandbox. HTTP requests work but WebSocket connections may fail. Deploy to Cloudflare for full functionality.
-
-## Links
-
-- [OpenClaw](https://github.com/openclaw/openclaw)
-- [OpenClaw Docs](https://docs.openclaw.ai/)
-- [Cloudflare Sandbox Docs](https://developers.cloudflare.com/sandbox/)
-- [Cloudflare Access Docs](https://developers.cloudflare.com/cloudflare-one/policies/access/)
+**⚠️ Recordatorio**: Las modificaciones fueron hechas con IA y pueden contener errores. Usa bajo tu propio riesgo y revisa el código antes de producción.

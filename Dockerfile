@@ -4,6 +4,7 @@ FROM docker.io/cloudflare/sandbox:0.7.0
 # The base image has Node 20, we need to replace it with Node 22
 # Using direct binary download for reliability
 ENV NODE_VERSION=22.13.1
+# Build cache bust: 033-multi-provider-support
 RUN ARCH="$(dpkg --print-architecture)" \
     && case "${ARCH}" in \
          amd64) NODE_ARCH="x64" ;; \
@@ -15,14 +16,17 @@ RUN ARCH="$(dpkg --print-architecture)" \
     && tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 \
     && rm /tmp/node.tar.xz \
     && node --version \
-    && npm --version
+    && npm --version 
 
 # Install pnpm globally
-RUN npm install -g pnpm
+# Build cache bust: 037
+RUN npm cache clean --force
+RUN npm install -g pnpm --strict-ssl=false
 
 # Install moltbot (CLI is still named clawdbot until upstream renames)
 # Pin to specific version for reproducible builds
-RUN npm install -g clawdbot@2026.1.24-3 \
+# Build cache bust: 037
+RUN npm install -g clawdbot@2026.1.24-3 --strict-ssl=false \
     && clawdbot --version
 
 # Create moltbot directories (paths still use clawdbot until upstream renames)
@@ -33,12 +37,17 @@ RUN mkdir -p /root/.clawdbot \
     && mkdir -p /root/clawd/skills
 
 # Copy startup script
-# Build cache bust: 025
+# Build cache bust: 037
 COPY start-moltbot.sh /usr/local/bin/start-moltbot.sh
 RUN chmod +x /usr/local/bin/start-moltbot.sh
 
-# Copy default configuration template\
-# Build cache bust: 025
+# Copy Clawdbot patch script
+# Build cache bust: 037
+COPY scripts/patch-clawdbot-nvidia.sh /usr/local/bin/patch-clawdbot-nvidia.sh
+RUN chmod +x /usr/local/bin/patch-clawdbot-nvidia.sh
+
+# Copy default configuration template
+# Build cache bust: 027-nvidia-patch
 COPY moltbot.json.template /root/.clawdbot-templates/moltbot.json.template
 
 # Copy custom skills
@@ -49,4 +58,4 @@ WORKDIR /root/clawd
 
 # Expose the gateway port
 EXPOSE 18789
-# 024
+# 037

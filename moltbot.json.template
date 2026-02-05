@@ -3,16 +3,7 @@
     "defaults": {
       "workspace": "/root/.clawdbot/workspace",
       "model": {
-        "primary": "openrouter/free"
-      },
-      "models": {
-		"gpt-5.2",
-        "gpt-4.5-preview",
-		"openrouter/deepseek/deepseek-chat-v3-0324",
-		"openrouter/z-ai/glm-4.7";
-		"openrouter/z-ai/glm-4.5-air:free",
-		"openrouter/auto",
-		"openrouter/free"
+        "primary": "glm-4.7"
       }
     }
   },
@@ -21,4 +12,3 @@
     "mode": "local"
   }
 }
-# 025

@@ -8,6 +8,17 @@
 
 set -e
 
+# PATCH: Fix Nvidia provider bug in Clawdbot
+# This must run before any model configuration
+if [ -f "/usr/local/bin/patch-clawdbot-nvidia.sh" ]; then
+    echo "🔧 Applying Clawdbot patch for custom providers..."
+    /usr/local/bin/patch-clawdbot-nvidia.sh || {
+        echo "⚠️  Warning: Clawdbot patch failed, Nvidia provider may not work correctly"
+    }
+else
+    echo "⚠️  Warning: Clawdbot patch script not found, Nvidia provider may not work"
+fi
+
 # Check if clawdbot gateway is already running - bail early if so
 # Note: CLI is still named "clawdbot" until upstream renames it
 if pgrep -f "clawdbot gateway" > /dev/null 2>&1; then
@@ -105,6 +116,9 @@ if [ -d "$BACKUP_DIR/skills" ] && [ "$(ls -A $BACKUP_DIR/skills 2>/dev/null)" ];
     fi
 fi
 
+# Ensure workspace directory exists (even after restore)
+mkdir -p "/root/.clawdbot/workspace"
+
 # If config file still doesn't exist, create from template
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "No existing config found, initializing from template..."
@@ -153,6 +167,88 @@ config.agents.defaults.model = config.agents.defaults.model || {};
 config.gateway = config.gateway || {};
 config.channels = config.channels || {};
 
+// Helper function to configure OpenRouter models
+function configureOpenRouterModels() {
+    console.log('Configuring OpenRouter with multiple models...');
+
+    // Add all model aliases (description not supported by clawdbot schema)
+    config.agents.defaults.models = config.agents.defaults.models || {};
+
+    // Auto-routing / Free-routing
+    config.agents.defaults.models['openrouter/auto'] = { alias: 'auto' };
+    config.agents.defaults.models['openrouter/free'] = { alias: 'free' };
+
+    // General purpose
+    config.agents.defaults.models['openrouter/deepseek/deepseek-chat-v3-0324'] = { alias: 'deep' };
+
+    // Coding specialists
+    config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct'] = { alias: 'qwen' };
+    config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct:free'] = { alias: 'qwenfree' };
+    config.agents.defaults.models['openrouter/mistralai/devstral-small:free'] = { alias: 'devstral' };
+    config.agents.defaults.models['openrouter/xiaomi/mimo-vl-7b:free'] = { alias: 'mimofree' };
+    config.agents.defaults.models['openrouter/x-ai/grok-code-fast-1'] = { alias: 'grokcode' };
+
+    // Agentic / Tools
+    config.agents.defaults.models['openrouter/x-ai/grok-4.1-fast'] = { alias: 'grok' };
+    //config.agents.defaults.models['openrouter/moonshotai/kimi-k2.5'] = { alias: 'kimi' };
+
+    // Speed / Fast
+    config.agents.defaults.models['openrouter/google/gemini-2.0-flash-001'] = { alias: 'flash' };
+
+    // Claude models
+    config.agents.defaults.models['openrouter/anthropic/claude-3.5-haiku'] = { alias: 'haiku' };
+    config.agents.defaults.models['openrouter/anthropic/claude-sonnet-4'] = { alias: 'sonnet' };
+
+    // OpenAI models
+    config.agents.defaults.models['openrouter/openai/gpt-4o-mini'] = { alias: 'mini' };
+    config.agents.defaults.models['openrouter/openai/gpt-4o'] = { alias: 'gpt' };
+
+    // Reasoning models
+    config.agents.defaults.models['openrouter/deepseek/deepseek-reasoner'] = { alias: 'think' };
+    config.agents.defaults.models['openrouter/qwen/qwq-32b-preview'] = { alias: 'qwq' };
+
+    // GLM
+    config.agents.defaults.models['openrouter/z-ai/glm-4.7'] = { alias: 'glm-4.7' };
+    config.agents.defaults.models['openrouter/z-ai/glm-4.5-air:free'] = { alias: 'glmfree' };
+
+}
+
+
+// Helper function to configure Nvidia NIM models
+function configureNvidiaModels() {
+    console.log('Configuring Nvidia API with NIM models...');
+
+    // Add all Nvidia NIM model aliases
+    config.agents.defaults.models = config.agents.defaults.models || {};
+
+    // Moonshot AI - Kimi models
+    config.agents.defaults.models['nvidia/moonshotai/kimi-k2.5'] = { alias: 'kimi' };
+    config.agents.defaults.models['nvidia/moonshotai/moonshot-v1-8k'] = { alias: 'moonshot8k' };
+    config.agents.defaults.models['nvidia/moonshotai/moonshot-v1-32k'] = { alias: 'moonshot32k' };
+    config.agents.defaults.models['nvidia/moonshotai/moonshot-v1-128k'] = { alias: 'moonshot128k' };
+
+    // Meta Llama models
+    config.agents.defaults.models['nvidia/meta/llama-3.3-70b-instruct'] = { alias: 'llama70b' };
+    config.agents.defaults.models['nvidia/meta/llama-3.1-405b-instruct'] = { alias: 'llama405b' };
+
+    // Mistral models
+    config.agents.defaults.models['nvidia/mistralai/mistral-large-2-instruct'] = { alias: 'mistral' };
+    config.agents.defaults.models['nvidia/mistralai/mixtral-8x7b-instruct'] = { alias: 'mixtral' };
+
+    // Google models
+    config.agents.defaults.models['nvidia/google/gemma-2-27b-it'] = { alias: 'gemma27b' };
+
+    // Nvidia proprietary
+    config.agents.defaults.models['nvidia/nvidia/llama-3.1-nemotron-70b-instruct'] = { alias: 'nemotron' };
+
+    // IBM Granite
+    config.agents.defaults.models['nvidia/ibm/granite-3.1-8b-instruct'] = { alias: 'granite' };
+
+    // DeepSeek
+    config.agents.defaults.models['nvidia/deepseek-ai/deepseek-r1'] = { alias: 'deepseek-r1' };
+
+}
+
 // Clean up any broken anthropic provider config from previous runs
 // (older versions didn't include required 'name' field)
 if (config.models?.providers?.anthropic?.models) {
@@ -160,31 +256,7 @@ if (config.models?.providers?.anthropic?.models) {
     if (hasInvalidModels) {
         console.log('Removing broken anthropic provider config (missing model names)');
         delete config.models.providers.anthropic;
-
-// Clean up invalid openrouter provider config (OpenRouter uses built-in support, no providers config needed)
-if (config.models?.providers?.openrouter) {
-    console.log('Removing invalid models.providers.openrouter block');
-    delete config.models.providers.openrouter;
-    if (config.models.providers && Object.keys(config.models.providers).length === 0) {
-        delete config.models.providers;
     }
-    if (config.models && Object.keys(config.models).length === 0) {
-        delete config.models;
-    }
-}
-    }
-
-// Clean up invalid openrouter provider config (OpenRouter uses built-in support, no providers config needed)
-if (config.models?.providers?.openrouter) {
-    console.log('Removing invalid models.providers.openrouter block');
-    delete config.models.providers.openrouter;
-    if (config.models.providers && Object.keys(config.models.providers).length === 0) {
-        delete config.models.providers;
-    }
-    if (config.models && Object.keys(config.models).length === 0) {
-        delete config.models;
-    }
-}
 }
 
 // Clean up invalid openrouter provider config (OpenRouter uses built-in support, no providers config needed)
@@ -258,87 +330,142 @@ if (process.env.SLACK_BOT_TOKEN && process.env.SLACK_APP_TOKEN) {
     config.channels.slack.enabled = true;
 }
 
-// Base URL override (e.g., for Cloudflare AI Gateway)
-// Usage: Set AI_GATEWAY_BASE_URL or ANTHROPIC_BASE_URL to your endpoint like:
-//   https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/anthropic
-//   https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/openai
-const baseUrl = (process.env.AI_GATEWAY_BASE_URL || process.env.ANTHROPIC_BASE_URL || '').replace(/\/+$/, '');
-const isOpenAI = baseUrl.endsWith('/openai');
-const isOpenRouter = baseUrl.endsWith('openrouter.ai/api/v1');
+// ============================================================
+// MULTI-PROVIDER CONFIGURATION
+// ============================================================
+// Configure all available providers independently.
+// This allows switching between providers using model prefixes:
+// - /openrouter/qwen
+// - /nvidia/kimi
+// - /anthropic/claude-opus-4-5
+// ============================================================
 
-if (isOpenAI) {
-    // Create custom openai provider config with baseUrl override
-    // Omit apiKey so moltbot falls back to OPENAI_API_KEY env var
-    console.log('Configuring OpenAI provider with base URL:', baseUrl);
-    config.models = config.models || {};
-    config.models.providers = config.models.providers || {};
+console.log('Configuring AI providers...');
+
+// Initialize models object
+config.models = config.models || {};
+config.models.providers = config.models.providers || {};
+config.agents.defaults.models = config.agents.defaults.models || {};
+
+let primaryModelSet = false;
+
+// Detect base URL type from AI_GATEWAY_BASE_URL or ANTHROPIC_BASE_URL
+const baseUrl = (process.env.AI_GATEWAY_BASE_URL || process.env.ANTHROPIC_BASE_URL || '').replace(/\/+$/, '');
+const isOpenAIGateway = baseUrl.endsWith('/openai');
+const isOpenRouterGateway = baseUrl.endsWith('openrouter.ai/api/v1');
+const isNvidiaGateway = baseUrl.includes('api.nvidia.com') || baseUrl.includes('integrate.api.nvidia.com');
+const isAnthropicGateway = baseUrl && !isOpenAIGateway && !isOpenRouterGateway && !isNvidiaGateway;
+
+// ============================================================
+// OPENAI PROVIDER
+// ============================================================
+if (isOpenAIGateway || process.env.OPENAI_API_KEY) {
+    console.log('Configuring OpenAI provider...');
+    const openaiBaseUrl = isOpenAIGateway ? baseUrl : undefined;
+
     config.models.providers.openai = {
-        baseUrl: baseUrl,
         api: 'openai-responses',
         models: [
             { id: 'gpt-5.2', name: 'GPT-5.2', contextWindow: 200000 },
             { id: 'gpt-5', name: 'GPT-5', contextWindow: 200000 },
             { id: 'gpt-4.5-preview', name: 'GPT-4.5 Preview', contextWindow: 128000 },
+            { id: 'gpt-4o', name: 'GPT-4o', contextWindow: 128000 },
         ]
     };
-    // Add models to the allowlist so they appear in /models
-    config.agents.defaults.models = config.agents.defaults.models || {};
+
+    if (openaiBaseUrl) {
+        config.models.providers.openai.baseUrl = openaiBaseUrl;
+        console.log('  - Using OpenAI via AI Gateway:', openaiBaseUrl);
+    } else {
+        console.log('  - Using OpenAI with default endpoint');
+    }
+
+    // Add model aliases
     config.agents.defaults.models['openai/gpt-5.2'] = { alias: 'GPT-5.2' };
     config.agents.defaults.models['openai/gpt-5'] = { alias: 'GPT-5' };
     config.agents.defaults.models['openai/gpt-4.5-preview'] = { alias: 'GPT-4.5' };
-    config.agents.defaults.model.primary = 'openai/gpt-5.2';
-} else if (isOpenRouter) {
-        // Default to OpenRouter Auto for intelligent routing
-    console.log('Configuring OpenRouter with multiple models...');
+    config.agents.defaults.models['openai/gpt-4o'] = { alias: 'GPT-4o' };
 
-    // Add all model aliases (description not supported by clawdbot schema)
-    config.agents.defaults.models = config.agents.defaults.models || {};
+    // Set as primary if not already set
+    if (!primaryModelSet) {
+        config.agents.defaults.model.primary = 'openai/gpt-5.2';
+        primaryModelSet = true;
+        console.log('  - Set as primary model: openai/gpt-5.2');
+    }
+}
 
-    // Auto-routing / Free-routing
-    config.agents.defaults.models['openrouter/auto'] = { alias: 'auto' };
-	config.agents.defaults.models['openrouter/free'] = { alias: 'free' };
-	
-    // General purpose
-    config.agents.defaults.models['openrouter/deepseek/deepseek-chat-v3-0324'] = { alias: 'deep' };
+// ============================================================
+// OPENROUTER PROVIDER
+// ============================================================
+if (isOpenRouterGateway || process.env.OPENROUTER_API_KEY) {
+    console.log('Configuring OpenRouter provider...');
 
-    // Coding specialists
-    config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct'] = { alias: 'qwen' };
-    config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct:free'] = { alias: 'qwenfree' };
-    config.agents.defaults.models['openrouter/mistralai/devstral-small:free'] = { alias: 'devstral' };
-    config.agents.defaults.models['openrouter/xiaomi/mimo-vl-7b:free'] = { alias: 'mimofree' };
-    config.agents.defaults.models['openrouter/x-ai/grok-code-fast-1'] = { alias: 'grokcode' };
+    // OpenRouter uses built-in support, so we just configure models
+    configureOpenRouterModels();
 
-    // Agentic / Tools
-    config.agents.defaults.models['openrouter/x-ai/grok-4.1-fast'] = { alias: 'grok' };
-    config.agents.defaults.models['openrouter/moonshotai/kimi-k2.5'] = { alias: 'kimi' };
+    if (isOpenRouterGateway) {
+        console.log('  - Using OpenRouter via AI Gateway:', baseUrl);
+    } else {
+        console.log('  - Using OpenRouter with default endpoint');
+    }
 
-    // Speed / Fast
-    config.agents.defaults.models['openrouter/google/gemini-2.0-flash-001'] = { alias: 'flash' };
+    // Set as primary if not already set
+    if (!primaryModelSet) {
+        config.agents.defaults.model.primary = 'openrouter/free';
+        primaryModelSet = true;
+        console.log('  - Set as primary model: openrouter/free');
+    }
+}
 
-    // Claude models
-    config.agents.defaults.models['openrouter/anthropic/claude-3.5-haiku'] = { alias: 'haiku' };
-    config.agents.defaults.models['openrouter/anthropic/claude-sonnet-4'] = { alias: 'sonnet' };
+// ============================================================
+// NVIDIA PROVIDER
+// ============================================================
+if (isNvidiaGateway || process.env.NVIDIA_API_KEY) {
+    console.log('Configuring Nvidia provider...');
 
-    // OpenAI models
-    config.agents.defaults.models['openrouter/openai/gpt-4o-mini'] = { alias: 'mini' };
-    config.agents.defaults.models['openrouter/openai/gpt-4o'] = { alias: 'gpt' };
+    const nvidiaBaseUrl = isNvidiaGateway ? baseUrl : 'https://integrate.api.nvidia.com/v1';
+    const nvidiaApiKey = process.env.NVIDIA_API_KEY || process.env.AI_GATEWAY_API_KEY || '';
 
-    // Reasoning models
-    config.agents.defaults.models['openrouter/deepseek/deepseek-reasoner'] = { alias: 'think' };
-    config.agents.defaults.models['openrouter/qwen/qwq-32b-preview'] = { alias: 'qwq' };
+    config.models.providers.nvidia = {
+        baseUrl: nvidiaBaseUrl,
+        apiKey: nvidiaApiKey,
+        //api: 'openai-responses',
+        models: [
+            { id: 'moonshotai/kimi-k2.5', name: 'Kimi 2.5', contextWindow: 200000 },
+            { id: 'moonshotai/moonshot-v1-8k', name: 'Moonshot 8K', contextWindow: 8000 },
+            { id: 'moonshotai/moonshot-v1-32k', name: 'Moonshot 32K', contextWindow: 32000 },
+            { id: 'moonshotai/moonshot-v1-128k', name: 'Moonshot 128K', contextWindow: 128000 },
+            { id: 'meta/llama-3.3-70b-instruct', name: 'Llama 3.3 70B', contextWindow: 128000 },
+            { id: 'meta/llama-3.1-405b-instruct', name: 'Llama 3.1 405B', contextWindow: 128000 },
+            { id: 'mistralai/mistral-large-2-instruct', name: 'Mistral Large 2', contextWindow: 128000 },
+            { id: 'mistralai/mixtral-8x7b-instruct', name: 'Mixtral 8x7B', contextWindow: 32000 },
+            { id: 'google/gemma-2-27b-it', name: 'Gemma 2 27B', contextWindow: 8000 },
+            { id: 'nvidia/llama-3.1-nemotron-70b-instruct', name: 'Nemotron 70B', contextWindow: 128000 },
+            { id: 'ibm/granite-3.1-8b-instruct', name: 'Granite 8B', contextWindow: 8000 },
+            { id: 'deepseek-ai/deepseek-r1', name: 'DeepSeek R1', contextWindow: 64000 }
+        ]
+    };
 
-	// GLM
-    config.agents.defaults.models['openrouter/z-ai/glm-4.7'] = { alias: 'glm-4.7' };
-    config.agents.defaults.models['openrouter/z-ai/glm-4.5-air:free'] = { alias: 'glmfree' };
-	
-	// Primary
-    config.agents.defaults.model.primary = 'openrouter/free';
-} else if (baseUrl) {
-    console.log('Configuring Anthropic provider with base URL:', baseUrl);
-    config.models = config.models || {};
-    config.models.providers = config.models.providers || {};
+    console.log('  - Using Nvidia endpoint:', nvidiaBaseUrl);
+
+    // Configure Nvidia models
+    configureNvidiaModels();
+
+    // Set as primary if not already set
+    if (!primaryModelSet) {
+        config.agents.defaults.model.primary = 'nvidia/moonshotai/kimi-k2.5';
+        primaryModelSet = true;
+        console.log('  - Set as primary model: nvidia/moonshotai/kimi-k2.5');
+    }
+}
+
+// ============================================================
+// ANTHROPIC PROVIDER
+// ============================================================
+if (isAnthropicGateway || process.env.ANTHROPIC_API_KEY) {
+    console.log('Configuring Anthropic provider...');
+
     const providerConfig = {
-        baseUrl: baseUrl,
         api: 'anthropic-messages',
         models: [
             { id: 'claude-opus-4-5-20251101', name: 'Claude Opus 4.5', contextWindow: 200000 },
@@ -346,60 +473,76 @@ if (isOpenAI) {
             { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', contextWindow: 200000 },
         ]
     };
-    // Include API key in provider config if set (required when using custom baseUrl)
+
+    // baseUrl must always be a string, never undefined
+    if (isAnthropicGateway) {
+        providerConfig.baseUrl = baseUrl;
+        console.log('  - Using Anthropic via AI Gateway:', baseUrl);
+    } else {
+        providerConfig.baseUrl = 'https://api.anthropic.com/v1';
+        console.log('  - Using Anthropic with default endpoint');
+    }
+
+    // Include API key in provider config if set
     if (process.env.ANTHROPIC_API_KEY) {
         providerConfig.apiKey = process.env.ANTHROPIC_API_KEY;
     }
+
     config.models.providers.anthropic = providerConfig;
-    // Add models to the allowlist so they appear in /models
-    config.agents.defaults.models = config.agents.defaults.models || {};
+
+    // Add model aliases
     config.agents.defaults.models['anthropic/claude-opus-4-5-20251101'] = { alias: 'Opus 4.5' };
     config.agents.defaults.models['anthropic/claude-sonnet-4-5-20250929'] = { alias: 'Sonnet 4.5' };
     config.agents.defaults.models['anthropic/claude-haiku-4-5-20251001'] = { alias: 'Haiku 4.5' };
-    config.agents.defaults.model.primary = 'anthropic/claude-opus-4-5-20251101';
-} else {
-    // Default to OpenRouter Auto for intelligent routing
-    console.log('Configuring OpenRouter with multiple models...');
 
-    // Add all model aliases (description not supported by clawdbot schema)
-    config.agents.defaults.models = config.agents.defaults.models || {};
-
-    // Auto-routing / Free-routing
-    config.agents.defaults.models['openrouter/auto'] = { alias: 'auto' };
-	config.agents.defaults.models['openrouter/free'] = { alias: 'free' };
-	
-    // General purpose
-    config.agents.defaults.models['openrouter/deepseek/deepseek-chat-v3-0324'] = { alias: 'deep' };
-
-    // Coding specialists
-    config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct'] = { alias: 'qwen' };
-    config.agents.defaults.models['openrouter/qwen/qwen-2.5-coder-32b-instruct:free'] = { alias: 'qwenfree' };
-    config.agents.defaults.models['openrouter/mistralai/devstral-small:free'] = { alias: 'devstral' };
-    config.agents.defaults.models['openrouter/xiaomi/mimo-vl-7b:free'] = { alias: 'mimofree' };
-    config.agents.defaults.models['openrouter/x-ai/grok-code-fast-1'] = { alias: 'grokcode' };
-
-    // Agentic / Tools
-    config.agents.defaults.models['openrouter/x-ai/grok-4.1-fast'] = { alias: 'grok' };
-    config.agents.defaults.models['openrouter/moonshotai/kimi-k2.5'] = { alias: 'kimi' };
-
-    // Speed / Fast
-    config.agents.defaults.models['openrouter/google/gemini-2.0-flash-001'] = { alias: 'flash' };
-
-    // Claude models
-    config.agents.defaults.models['openrouter/anthropic/claude-3.5-haiku'] = { alias: 'haiku' };
-    config.agents.defaults.models['openrouter/anthropic/claude-sonnet-4'] = { alias: 'sonnet' };
-
-    // OpenAI models
-    config.agents.defaults.models['openrouter/openai/gpt-4o-mini'] = { alias: 'mini' };
-    config.agents.defaults.models['openrouter/openai/gpt-4o'] = { alias: 'gpt' };
-
-    // Reasoning models
-    config.agents.defaults.models['openrouter/deepseek/deepseek-reasoner'] = { alias: 'think' };
-    config.agents.defaults.models['openrouter/qwen/qwq-32b-preview'] = { alias: 'qwq' };
-
-    // Set OpenRouter Auto as default for intelligent routing
-    config.agents.defaults.model.primary = 'openrouter/auto';
+    // Set as primary if not already set
+    if (!primaryModelSet) {
+        config.agents.defaults.model.primary = 'anthropic/claude-opus-4-5-20251101';
+        primaryModelSet = true;
+        console.log('  - Set as primary model: anthropic/claude-opus-4-5-20251101');
+    }
 }
+
+// ============================================================
+// FALLBACK: If no provider configured, use OpenRouter
+// ============================================================
+if (!primaryModelSet) {
+    console.log('No API keys configured, defaulting to OpenRouter...');
+    configureOpenRouterModels();
+    config.agents.defaults.model.primary = 'openrouter/free';
+    console.log('  - Set as primary model: openrouter/free');
+}
+
+// Log detailed provider summary
+console.log('');
+console.log('='.repeat(60));
+console.log('PROVIDER CONFIGURATION SUMMARY');
+console.log('='.repeat(60));
+console.log('Primary model:', config.agents.defaults.model.primary);
+console.log('');
+
+const providers = Object.keys(config.models.providers || {});
+if (providers.length > 0) {
+    console.log('Configured providers (' + providers.length + '):');
+    providers.forEach(p => {
+        console.log('  - ' + p);
+        const providerConfig = config.models.providers[p];
+        if (providerConfig.baseUrl) {
+            console.log('    baseUrl: ' + providerConfig.baseUrl);
+        }
+        if (providerConfig.models) {
+            console.log('    models: ' + providerConfig.models.length);
+        }
+    });
+} else {
+    console.log('No providers configured (using built-in OpenRouter)');
+}
+
+console.log('');
+const modelCount = Object.keys(config.agents.defaults.models || {}).length;
+console.log('Total models available: ' + modelCount);
+console.log('='.repeat(60));
+console.log('');
 
 // Write updated config
 fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
@@ -428,4 +571,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 025
+# 037
