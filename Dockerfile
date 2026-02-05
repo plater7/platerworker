@@ -49,4 +49,4 @@ WORKDIR /root/clawd
 
 # Expose the gateway port
 EXPOSE 18789
-# 034-nvidia-models-array-fix
+# 035-fix-nvidia-anthropic-validation

@@ -454,8 +454,6 @@ if (isNvidiaGateway || process.env.NVIDIA_API_KEY) {
 if (isAnthropicGateway || process.env.ANTHROPIC_API_KEY) {
     console.log('Configuring Anthropic provider...');
 
-    const anthropicBaseUrl = isAnthropicGateway ? baseUrl : undefined;
-
     const providerConfig = {
         api: 'anthropic-messages',
         models: [
@@ -465,10 +463,12 @@ if (isAnthropicGateway || process.env.ANTHROPIC_API_KEY) {
         ]
     };
 
-    if (anthropicBaseUrl) {
-        providerConfig.baseUrl = anthropicBaseUrl;
-        console.log('  - Using Anthropic via AI Gateway:', anthropicBaseUrl);
+    // baseUrl must always be a string, never undefined
+    if (isAnthropicGateway) {
+        providerConfig.baseUrl = baseUrl;
+        console.log('  - Using Anthropic via AI Gateway:', baseUrl);
     } else {
+        providerConfig.baseUrl = 'https://api.anthropic.com/v1';
         console.log('  - Using Anthropic with default endpoint');
     }
 
@@ -560,4 +560,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 034-nvidia-models-array-fix
+# 035-fix-nvidia-anthropic-validation
