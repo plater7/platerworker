@@ -158,17 +158,7 @@ config.channels = config.channels || {};
 
 // Helper function to configure OpenRouter models
 function configureOpenRouterModels() {
-    // Configure Nvidia NIM models
-    console.log('Configuring Nvidia API with custom base URL:', baseUrl);
-    config.models = config.models || {};
-    config.models.providers = config.models.providers || {};
-    config.models.providers.nvidia = {
-        baseUrl: 'https://integrate.api.nvidia.com/v1',
-        apiKey: process.env.NVIDIA_API_KEY || process.env.AI_GATEWAY_API_KEY || ''
-    };
-
-    configureNvidiaModels();
-	console.log('Configuring OpenRouter with multiple models...');
+    console.log('Configuring OpenRouter with multiple models...');
 
     // Add all model aliases (description not supported by clawdbot schema)
     config.agents.defaults.models = config.agents.defaults.models || {};
@@ -444,4 +434,4 @@ else
     echo "Starting gateway with device pairing (no token)..."
     exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi
-# 033
+# 028
