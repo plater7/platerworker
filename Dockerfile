@@ -19,11 +19,13 @@ RUN ARCH="$(dpkg --print-architecture)" \
     && npm --version 
 
 # Install pnpm globally
-RUN npm install -g pnpm
+# Build cache bust: 036
+RUN npm install -g pnpm --strict-ssl=false
 
 # Install moltbot (CLI is still named clawdbot until upstream renames)
 # Pin to specific version for reproducible builds
-RUN npm install -g clawdbot@2026.1.24-3 \
+# Build cache bust: 036
+RUN npm install -g clawdbot@2026.1.24-3 --strict-ssl=false \
     && clawdbot --version
 
 # Create moltbot directories (paths still use clawdbot until upstream renames)
@@ -54,4 +56,4 @@ WORKDIR /root/clawd
 
 # Expose the gateway port
 EXPOSE 18789
-# 035-fix-nvidia-anthropic-validation
+# 036
