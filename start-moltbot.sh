@@ -8,17 +8,6 @@
 
 set -e
 
-# PATCH: Fix Nvidia provider bug in Clawdbot
-# This must run before any model configuration
-if [ -f "/usr/local/bin/patch-clawdbot-nvidia.sh" ]; then
-    echo "🔧 Applying Clawdbot patch for custom providers..."
-    /usr/local/bin/patch-clawdbot-nvidia.sh || {
-        echo "⚠️  Warning: Clawdbot patch failed, Nvidia provider may not work correctly"
-    }
-else
-    echo "⚠️  Warning: Clawdbot patch script not found, Nvidia provider may not work"
-fi
-
 # Check if clawdbot gateway is already running - bail early if so
 # Note: CLI is still named "clawdbot" until upstream renames it
 if pgrep -f "clawdbot gateway" > /dev/null 2>&1; then
@@ -213,42 +202,6 @@ function configureOpenRouterModels() {
 
 }
 
-
-// Helper function to configure Nvidia NIM models
-function configureNvidiaModels() {
-    console.log('Configuring Nvidia API with NIM models...');
-
-    // Add all Nvidia NIM model aliases
-    config.agents.defaults.models = config.agents.defaults.models || {};
-
-    // Moonshot AI - Kimi models
-    config.agents.defaults.models['nvidia/moonshotai/kimi-k2.5'] = { alias: 'kimi' };
-    config.agents.defaults.models['nvidia/moonshotai/moonshot-v1-8k'] = { alias: 'moonshot8k' };
-    config.agents.defaults.models['nvidia/moonshotai/moonshot-v1-32k'] = { alias: 'moonshot32k' };
-    config.agents.defaults.models['nvidia/moonshotai/moonshot-v1-128k'] = { alias: 'moonshot128k' };
-
-    // Meta Llama models
-    config.agents.defaults.models['nvidia/meta/llama-3.3-70b-instruct'] = { alias: 'llama70b' };
-    config.agents.defaults.models['nvidia/meta/llama-3.1-405b-instruct'] = { alias: 'llama405b' };
-
-    // Mistral models
-    config.agents.defaults.models['nvidia/mistralai/mistral-large-2-instruct'] = { alias: 'mistral' };
-    config.agents.defaults.models['nvidia/mistralai/mixtral-8x7b-instruct'] = { alias: 'mixtral' };
-
-    // Google models
-    config.agents.defaults.models['nvidia/google/gemma-2-27b-it'] = { alias: 'gemma27b' };
-
-    // Nvidia proprietary
-    config.agents.defaults.models['nvidia/nvidia/llama-3.1-nemotron-70b-instruct'] = { alias: 'nemotron' };
-
-    // IBM Granite
-    config.agents.defaults.models['nvidia/ibm/granite-3.1-8b-instruct'] = { alias: 'granite' };
-
-    // DeepSeek
-    config.agents.defaults.models['nvidia/deepseek-ai/deepseek-r1'] = { alias: 'deepseek-r1' };
-
-}
-
 // Clean up any broken anthropic provider config from previous runs
 // (older versions didn't include required 'name' field)
 if (config.models?.providers?.anthropic?.models) {
@@ -330,31 +283,15 @@ if (process.env.SLACK_BOT_TOKEN && process.env.SLACK_APP_TOKEN) {
     config.channels.slack.enabled = true;
 }
 
-// ============================================================
-// MULTI-PROVIDER CONFIGURATION
-// ============================================================
-// Configure all available providers independently.
-// This allows switching between providers using model prefixes:
-// - /openrouter/qwen
-// - /nvidia/kimi
-// - /anthropic/claude-opus-4-5
-// ============================================================
-
-console.log('Configuring AI providers...');
-
-// Initialize models object
-config.models = config.models || {};
-config.models.providers = config.models.providers || {};
-config.agents.defaults.models = config.agents.defaults.models || {};
-
-let primaryModelSet = false;
-
+// Base URL override (e.g., for Cloudflare AI Gateway)
+// Usage: Set AI_GATEWAY_BASE_URL or ANTHROPIC_BASE_URL to your endpoint like:
+//   https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/anthropic
+//   https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/openai
 // Detect base URL type from AI_GATEWAY_BASE_URL or ANTHROPIC_BASE_URL
 const baseUrl = (process.env.AI_GATEWAY_BASE_URL || process.env.ANTHROPIC_BASE_URL || '').replace(/\/+$/, '');
 const isOpenAIGateway = baseUrl.endsWith('/openai');
 const isOpenRouterGateway = baseUrl.endsWith('openrouter.ai/api/v1');
-const isNvidiaGateway = baseUrl.includes('api.nvidia.com') || baseUrl.includes('integrate.api.nvidia.com');
-const isAnthropicGateway = baseUrl && !isOpenAIGateway && !isOpenRouterGateway && !isNvidiaGateway;
+const isAnthropicGateway = baseUrl && !isOpenAIGateway && !isOpenRouterGateway;
 
 // ============================================================
 // OPENAI PROVIDER
@@ -414,48 +351,6 @@ if (isOpenRouterGateway || process.env.OPENROUTER_API_KEY) {
         config.agents.defaults.model.primary = 'openrouter/free';
         primaryModelSet = true;
         console.log('  - Set as primary model: openrouter/free');
-    }
-}
-
-// ============================================================
-// NVIDIA PROVIDER
-// ============================================================
-if (isNvidiaGateway || process.env.NVIDIA_API_KEY) {
-    console.log('Configuring Nvidia provider...');
-
-    const nvidiaBaseUrl = isNvidiaGateway ? baseUrl : 'https://integrate.api.nvidia.com/v1';
-    const nvidiaApiKey = process.env.NVIDIA_API_KEY || process.env.AI_GATEWAY_API_KEY || '';
-
-    config.models.providers.nvidia = {
-        baseUrl: nvidiaBaseUrl,
-        apiKey: nvidiaApiKey,
-        //api: 'openai-responses',
-        models: [
-            { id: 'moonshotai/kimi-k2.5', name: 'Kimi 2.5', contextWindow: 200000 },
-            { id: 'moonshotai/moonshot-v1-8k', name: 'Moonshot 8K', contextWindow: 8000 },
-            { id: 'moonshotai/moonshot-v1-32k', name: 'Moonshot 32K', contextWindow: 32000 },
-            { id: 'moonshotai/moonshot-v1-128k', name: 'Moonshot 128K', contextWindow: 128000 },
-            { id: 'meta/llama-3.3-70b-instruct', name: 'Llama 3.3 70B', contextWindow: 128000 },
-            { id: 'meta/llama-3.1-405b-instruct', name: 'Llama 3.1 405B', contextWindow: 128000 },
-            { id: 'mistralai/mistral-large-2-instruct', name: 'Mistral Large 2', contextWindow: 128000 },
-            { id: 'mistralai/mixtral-8x7b-instruct', name: 'Mixtral 8x7B', contextWindow: 32000 },
-            { id: 'google/gemma-2-27b-it', name: 'Gemma 2 27B', contextWindow: 8000 },
-            { id: 'nvidia/llama-3.1-nemotron-70b-instruct', name: 'Nemotron 70B', contextWindow: 128000 },
-            { id: 'ibm/granite-3.1-8b-instruct', name: 'Granite 8B', contextWindow: 8000 },
-            { id: 'deepseek-ai/deepseek-r1', name: 'DeepSeek R1', contextWindow: 64000 }
-        ]
-    };
-
-    console.log('  - Using Nvidia endpoint:', nvidiaBaseUrl);
-
-    // Configure Nvidia models
-    configureNvidiaModels();
-
-    // Set as primary if not already set
-    if (!primaryModelSet) {
-        config.agents.defaults.model.primary = 'nvidia/moonshotai/kimi-k2.5';
-        primaryModelSet = true;
-        console.log('  - Set as primary model: nvidia/moonshotai/kimi-k2.5');
     }
 }
 
